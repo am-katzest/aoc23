@@ -31,10 +31,43 @@ fn dgts_to_int(a: (char, char)) -> i32 {
         (tens, digit) => char_to_int(tens) * 10 + char_to_int(digit)
     }
 }
+static MATCHERS: &[(char, &str)] =
+    &[('0', "0"), ('0', "zero"),
+      ('1', "1"), ('1', "one"),
+      ('2', "2"), ('2', "two"),
+      ('3', "3"), ('3', "three"),
+      ('4', "4"), ('4', "four"),
+      ('5', "5"), ('5', "five"),
+      ('6', "6"), ('6', "six"),
+      ('7', "7"), ('7', "seven"),
+      ('8', "8"), ('8', "eight"),
+      ('9', "9"), ('9', "nine")];
+
+#[derive(Clone, Copy)]
+enum End {
+    Left,
+    Right,
+}
+
+fn index(end:End, string: &str, matcher: (char, &str)) -> Option<(char, usize)>{
+    let (c, sub) = matcher;
+    match end{
+        End::Left => string.find(sub).map(|position| (c, position)),
+        End::Right => string.rfind(sub).map(|position| (c, string.len() - sub.len() - position)),
+    }
+}
+
+fn select(string: &str, end:End) -> char{
+    MATCHERS.iter()
+    .filter_map(|m| index(end, string, *m))
+    .min_by_key(|(_, dist)| *dist)
+    .unwrap()
+    .0
+}
 
 #[cfg(test)]
 mod tests {
-    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1};
+    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select};
 
     #[test]
     fn is_digit_test() {
@@ -66,4 +99,21 @@ mod tests {
     fn parta_test() {
         assert_eq!(142, part1("1a.input"))
     }
+    #[test]
+    fn index_test() {
+        assert_eq!(Some(('3', 0)), index(End::Left, "meow", ('3', "me")));
+        assert_eq!(Some(('3', 2)), index(End::Left, "bemeow", ('3', "me")));
+        assert_eq!(None, index(End::Left, "bemeow", ('3', "niema")));
+        assert_eq!(Some(('3', 0)), index(End::Right, "bemeow", ('3', "ow")));
+        assert_eq!(Some(('3', 1)), index(End::Right, "bemeow", ('3', "eo")));
+    }
+    #[test]
+    fn select_test() {
+        assert_eq!('3', select("3", End::Right));
+        assert_eq!('1', select("3meow1", End::Right));
+        assert_eq!('3', select("3meow1", End::Left));
+        assert_eq!('1', select("onexxxxxtwo", End::Left));
+        assert_eq!('2', select("onexxxxxtwo", End::Right));
+    }
+
 }
