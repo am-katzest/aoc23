@@ -26,9 +26,11 @@ fn parse_section(section:&str) -> Cubes {
     acc
 }
     
-fn parse_line(line:&str){
-    //let (nr, rest) = line.split_once(":").unwrap();
-    ()
+fn parse_line(line:&str) -> (i32, Vec<Cubes>){
+    let (head, rest) = line.split_once(":").unwrap();
+    let nl = head.split(" ").last().unwrap().parse::<i32>().unwrap();
+    let cubess = rest.split(";").map(parse_section).collect();
+    (nl, cubess)
 }
 
 fn read_file(f:&str) {
@@ -48,7 +50,13 @@ mod tests {
 
     #[test]
     fn parse_test() {
-        assert_eq!(Cubes {red: 1, green:2, blue:6}, parse_section(" 1 red, 2 green, 6 blue"));
+        let line = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+        let ss = " 1 red, 2 green, 6 blue";
+        assert_eq!((1, vec![Cubes {red: 4, green:0, blue:3},
+                            Cubes {red: 1, green:2, blue:6},
+                            Cubes {red: 0, green:2, blue:0}]),
+                   parse_line(line));
+        assert_eq!(Cubes {red: 1, green:2, blue:6}, parse_section(ss));
         assert_eq!((6, "blue"), parse_subsection(" 6 blue"));
     }
 }

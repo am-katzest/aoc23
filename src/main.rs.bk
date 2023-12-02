@@ -1,41 +1,56 @@
-use std::cmp::Ordering;
+use std::fs::read_to_string;
 
-type Obt = Option<Box<Bt>>;
-struct Bt {
-    left: Obt,
-    val: u32,
-    right: Obt,
-}
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Cubes {red: i32,green: i32, blue: i32}
 
-fn bt(left: Obt, val: u32, right: Obt) -> Obt {
-    wrap(Bt { left, val, right })
-}
-fn wrap(x: Bt) -> Obt {
-    Some(Box::new(x))
+
+fn parse_subsection(sub: &str) -> (i32, &str) {
+    let (num, s) = sub.trim().split_once(" ").unwrap();
+    (num.parse::<i32>().unwrap(),s)
 }
 
-fn add(tree: Obt, val: u32) -> Obt {
-    if let Some(t) = tree {
-        let t = *t;
-        wrap(match t.val.cmp(&val) {
-            Ordering::Greater => Bt {left: add(t.left, val), ..t},
-            Ordering::Less => Bt {right: add(t.right, val), ..t},
-            Ordering::Equal => t,
-        })
-    } else {
-        bt(None, val, None)
-    }
-}
-fn prn(tree: Obt) {
-    if let Some(t) = tree {
-        prn(t.left);
-        println!("node: {}", t.val);
-        prn(t.right);
+// mutation, just for the variety
+fn add_subsection_(acc: &mut Cubes, new: &str){
+    let (n, s)= parse_subsection(new);
+    match s{
+        "red" => acc.red = n,
+        "green" => acc.green = n,
+        "blue" => acc.blue = n,
+        &_ => panic!("unknown thing: {}", s),
     }
 }
 
+fn parse_section(section:&str) -> Cubes {
+    let mut acc = Cubes { red: 0, green: 0, blue: 0};
+    section.split(",").for_each(|x| add_subsection_(&mut acc, x));
+    acc
+}
+    
+fn parse_line(line:&str){
+    //let (nr, rest) = line.split_once(":").unwrap();
+    ()
+}
+
+fn read_file(f:&str) {
+//    read_to_string(f)
+//        .unwrap()
+//        .lines()
+//        .map(parse_line)
+}
+    
 fn main() {
-    let starting = bt(None, 6, None);
-    let a = vec![5, 3, 4, 2, 7].iter().fold(starting, |a, &n| add(a, n));
-    prn(a);
+    //println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
+}
+
+#[cfg(test)]
+mod tests {
+    //use crate::*;
+
+    #[test]
+    fn parse_test() {
+        let s = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+        assert_eq!((1, vec![Cubes {red: 1, green:2, blue:6}], parse_section(s)));
+        assert_eq!(Cubes {red: 1, green:2, blue:6}, parse_section(" 1 red, 2 green, 6 blue"));
+        assert_eq!((6, "blue"), parse_subsection(" 6 blue"));
+    }
 }
