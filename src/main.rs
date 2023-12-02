@@ -9,18 +9,18 @@ fn part1(f: &str) -> i32 {
     .sum()
 }
 
-fn part2(f: &str) -> i32 {
+fn part2(matchers:&[(char, &str)], f: &str) -> i32 {
     read_to_string(f)
     .unwrap()
     .lines()
-    .map(edge_digits2)
+    .map(|x| edge_digits2(matchers, x))
     .map(dgts_to_int)
     .sum()
 }
 
 fn main() {
     println!("part 1: {}", part1("1b.input"));
-    println!("part 2: {}", part2("1b.input"));
+    println!("part 2: {}", part2(DIGITS_AND_STRINGS,"1b.input"));
 }
 
 fn is_digit(x: &char) -> bool {
@@ -42,7 +42,19 @@ fn dgts_to_int(a: (char, char)) -> i32 {
     }
 }
 
-static MATCHERS: &[(char, &str)] =
+static JUST_DIGITS: &[(char, &str)] =
+    &[('0', "0"),
+      ('1', "1"),
+      ('2', "2"),
+      ('3', "3"),
+      ('4', "4"),
+      ('5', "5"),
+      ('6', "6"),
+      ('7', "7"),
+      ('8', "8"),
+      ('9', "9"),];
+
+static DIGITS_AND_STRINGS: &[(char, &str)] =
     &[('0', "0"), ('0', "zero"),
       ('1', "1"), ('1', "one"),
       ('2', "2"), ('2', "two"),
@@ -68,22 +80,22 @@ fn index(end:End, string: &str, matcher: (char, &str)) -> Option<(char, usize)>{
     }
 }
 
-fn select(string: &str, end:End) -> char{
-    MATCHERS.iter()
+fn select(matchers:&[(char, &str)], string: &str, end:End) -> char{
+    matchers.iter()
     .filter_map(|m| index(end, string, *m))
     .min_by_key(|(_, dist)| *dist)
     .unwrap()
     .0
 }
 
-fn edge_digits2(x: &str) -> (char,char) {
-    (select(x, End::Left),
-     select(x, End::Right))
+fn edge_digits2(matchers: &[(char, &str)], x: &str) -> (char,char) {
+    (select(matchers, x, End::Left),
+     select(matchers, x, End::Right))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select, part2};
+    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select, part2, DIGITS_AND_STRINGS};
 
     #[test]
     fn is_digit_test() {
@@ -117,7 +129,7 @@ mod tests {
     }
     #[test]
     fn partb_test() {
-        assert_eq!(281, part2("1c.input"))
+        assert_eq!(281, part2(DIGITS_AND_STRINGS, "1c.input"))
     }
     #[test]
     fn index_test() {
@@ -129,11 +141,11 @@ mod tests {
     }
     #[test]
     fn select_test() {
-        assert_eq!('3', select("3", End::Right));
-        assert_eq!('1', select("3meow1", End::Right));
-        assert_eq!('3', select("3meow1", End::Left));
-        assert_eq!('1', select("onexxxxxtwo", End::Left));
-        assert_eq!('2', select("onexxxxxtwo", End::Right));
+        assert_eq!('3', select(DIGITS_AND_STRINGS, "3", End::Right));
+        assert_eq!('1', select(DIGITS_AND_STRINGS, "3meow1", End::Right));
+        assert_eq!('3', select(DIGITS_AND_STRINGS, "3meow1", End::Left));
+        assert_eq!('1', select(DIGITS_AND_STRINGS, "onexxxxxtwo", End::Left));
+        assert_eq!('2', select(DIGITS_AND_STRINGS, "onexxxxxtwo", End::Right));
     }
 
 }
