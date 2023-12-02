@@ -52,9 +52,34 @@ fn solve(f:&str) -> i32 {
         .filter_map(|(n, xs)| if game_possible(xs) {Some(n)} else {None})
         .sum()
 }
-    
+
+fn maximum(a: Cubes, b:Cubes) -> Cubes {
+    println!("blu {}", a.blue);
+    let max = |x, y| if y>x {y} else {x};
+    Cubes {red: max(a.red, b.red),
+          green: max(a.green, b.green),
+          blue: max(a.blue, b.blue)}
+}
+
+fn power(c: Cubes) -> i32 {
+    c.red * c.green * c.blue
+}
+
+fn solve2(f:&str) -> i32 {
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(parse_line)
+        .map(|(_, xs)| xs.iter()
+                          .fold(Cubes{red: 0, green: 0, blue: 0 },
+                                |acc, y| maximum(acc, *y)))
+        .map(power)
+        .sum()
+}
+
 fn main() {
     println!("part 1: {}", solve("2b.input"));
+    println!("part 2: {}", solve2("2b.input"));
 }
 
 #[cfg(test)]
@@ -82,5 +107,10 @@ mod tests {
         assert!(fits(&a, &a));
         assert!(!fits(&a, &c));
         assert!(!fits(&c, &a));
+    }
+    #[test]
+    fn part1() {
+        assert_eq!(8, solve("2a.input"));
+        assert_eq!(2286, solve2("2a.input"));
     }
 }
