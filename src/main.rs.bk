@@ -1,0 +1,41 @@
+use std::cmp::Ordering;
+
+type Obt = Option<Box<Bt>>;
+struct Bt {
+    left: Obt,
+    val: u32,
+    right: Obt,
+}
+
+fn bt(left: Obt, val: u32, right: Obt) -> Obt {
+    wrap(Bt { left, val, right })
+}
+fn wrap(x: Bt) -> Obt {
+    Some(Box::new(x))
+}
+
+fn add(tree: Obt, val: u32) -> Obt {
+    if let Some(t) = tree {
+        let t = *t;
+        wrap(match t.val.cmp(&val) {
+            Ordering::Greater => Bt {left: add(t.left, val), ..t},
+            Ordering::Less => Bt {right: add(t.right, val), ..t},
+            Ordering::Equal => t,
+        })
+    } else {
+        bt(None, val, None)
+    }
+}
+fn prn(tree: Obt) {
+    if let Some(t) = tree {
+        prn(t.left);
+        println!("node: {}", t.val);
+        prn(t.right);
+    }
+}
+
+fn main() {
+    let starting = bt(None, 6, None);
+    let a = vec![5, 3, 4, 2, 7].iter().fold(starting, |a, &n| add(a, n));
+    prn(a);
+}
