@@ -1,15 +1,5 @@
 use std::fs::read_to_string;
-
-fn part1(f: &str) -> i32 {
-    read_to_string(f)
-    .unwrap()
-    .lines()
-    .map(edge_digits)
-    .map(dgts_to_int)
-    .sum()
-}
-
-fn part2(matchers:&[(char, &str)], f: &str) -> i32 {
+fn solve(matchers:&[(char, &str)], f: &str) -> i32 {
     read_to_string(f)
     .unwrap()
     .lines()
@@ -19,17 +9,8 @@ fn part2(matchers:&[(char, &str)], f: &str) -> i32 {
 }
 
 fn main() {
-    println!("part 1: {}", part1("1b.input"));
-    println!("part 2: {}", part2(DIGITS_AND_STRINGS,"1b.input"));
-}
-
-fn is_digit(x: &char) -> bool {
-    x >= &'0' && x <= &'9'
-}
-
-fn edge_digits(x: &str) -> (char,char) {
-    (x.chars().find(is_digit).unwrap(),
-     x.chars().rev().find(is_digit).unwrap())
+    println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
+    println!("part 2: {}", solve(DIGITS_AND_STRINGS,"1b.input"));
 }
 
 fn char_to_int(a:char) -> i32 {
@@ -95,28 +76,8 @@ fn edge_digits2(matchers: &[(char, &str)], x: &str) -> (char,char) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select, part2, DIGITS_AND_STRINGS};
+    use crate::{char_to_int, dgts_to_int, index, End, select, solve, DIGITS_AND_STRINGS, JUST_DIGITS};
 
-    #[test]
-    fn is_digit_test() {
-        assert!(is_digit(&'0'));
-        assert!(is_digit(&'9'));
-        assert!(is_digit(&'3'));
-        assert!(is_digit(&'4'));
-        assert!(!is_digit(&'a'));
-        assert!(!is_digit(&':'));
-        assert!(!is_digit(&'/'));
-    }
-    #[test]
-    fn firstdgt_test() {
-        assert_eq!(('1','1'), edge_digits("1"));
-        assert_eq!(('1','1'), edge_digits("meow1"));
-        assert_eq!(('1','1'), edge_digits("1meow"));
-        assert_eq!(('1','1'), edge_digits("1meow1"));
-        assert_eq!(('2','3'), edge_digits("23"));
-        assert_eq!(('2','3'), edge_digits("meow2meow3meow"));
-
-    }
     #[test]
     fn to_int_test() {
         assert_eq!(3, char_to_int('3'));
@@ -125,11 +86,11 @@ mod tests {
     }
     #[test]
     fn parta_test() {
-        assert_eq!(142, part1("1a.input"))
+        assert_eq!(142, solve(JUST_DIGITS, "1a.input"))
     }
     #[test]
     fn partb_test() {
-        assert_eq!(281, part2(DIGITS_AND_STRINGS, "1c.input"))
+        assert_eq!(281, solve(DIGITS_AND_STRINGS, "1c.input"))
     }
     #[test]
     fn index_test() {
@@ -146,6 +107,8 @@ mod tests {
         assert_eq!('3', select(DIGITS_AND_STRINGS, "3meow1", End::Left));
         assert_eq!('1', select(DIGITS_AND_STRINGS, "onexxxxxtwo", End::Left));
         assert_eq!('2', select(DIGITS_AND_STRINGS, "onexxxxxtwo", End::Right));
+        assert_eq!('6', select(JUST_DIGITS, "onex56xxtwo", End::Right));
+        assert_eq!('5', select(JUST_DIGITS, "onex56xxtwo", End::Left));
     }
 
 }
