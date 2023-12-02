@@ -33,15 +33,28 @@ fn parse_line(line:&str) -> (i32, Vec<Cubes>){
     (nl, cubess)
 }
 
-fn read_file(f:&str) {
-//    read_to_string(f)
-//        .unwrap()
-//        .lines()
-//        .map(parse_line)
+const MAX: &Cubes = &Cubes{red: 12, green: 13, blue:14};
+
+/// each element of `a` is not less then it's `b` counterpart
+fn fits(a: &Cubes, b: &Cubes) -> bool {
+    a.red >= b.red && a.green >= b.green && a.blue >= b.blue
+}
+
+fn game_possible(xs: Vec<Cubes>) -> bool {
+    xs.iter().all(|x| fits(MAX, x))
+}
+
+fn solve(f:&str) -> i32 {
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(parse_line)
+        .filter_map(|(n, xs)| if game_possible(xs) {Some(n)} else {None})
+        .sum()
 }
     
 fn main() {
-    //println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
+    println!("part 1: {}", solve("2b.input"));
 }
 
 #[cfg(test)]
@@ -58,5 +71,16 @@ mod tests {
                    parse_line(line));
         assert_eq!(Cubes {red: 1, green:2, blue:6}, parse_section(ss));
         assert_eq!((6, "blue"), parse_subsection(" 6 blue"));
+    }
+    #[test]
+    fn comp_test() {
+        let a = Cubes {red: 0, green:2, blue:0};
+        let b = Cubes {red: 0, green:3, blue:0};
+        let c = Cubes {red: 0, green:0, blue:2};
+        assert!(!fits(&a, &b));
+        assert!(fits(&b, &a));
+        assert!(fits(&a, &a));
+        assert!(!fits(&a, &c));
+        assert!(!fits(&c, &a));
     }
 }
