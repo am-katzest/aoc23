@@ -33,15 +33,15 @@ fn parse_line(line:&str) -> (i32, Vec<Cubes>){
     (nl, cubess)
 }
 
-const MAX: &Cubes = &Cubes{red: 12, green: 13, blue:14};
+const MAX: Cubes = Cubes{red: 12, green: 13, blue:14};
 
 /// each element of `a` is not less then it's `b` counterpart
-fn fits(a: &Cubes, b: &Cubes) -> bool {
+fn fits(a: Cubes, b: Cubes) -> bool {
     a.red >= b.red && a.green >= b.green && a.blue >= b.blue
 }
 
 fn game_possible(xs: Vec<Cubes>) -> bool {
-    xs.iter().all(|x| fits(MAX, x))
+    xs.iter().copied().all(|x| fits(MAX, x))
 }
 
 fn solve(f:&str) -> i32 {
@@ -70,9 +70,9 @@ fn solve2(f:&str) -> i32 {
         .unwrap()
         .lines()
         .map(parse_line)
-        .map(|(_, xs)| xs.iter()
+        .map(|(_, xs)| xs.iter().copied()
                           .fold(Cubes{red: 0, green: 0, blue: 0 },
-                                |acc, y| maximum(acc, *y)))
+                                |acc, y| maximum(acc, y)))
         .map(power)
         .sum()
 }
@@ -102,11 +102,11 @@ mod tests {
         let a = Cubes {red: 0, green:2, blue:0};
         let b = Cubes {red: 0, green:3, blue:0};
         let c = Cubes {red: 0, green:0, blue:2};
-        assert!(!fits(&a, &b));
-        assert!(fits(&b, &a));
-        assert!(fits(&a, &a));
-        assert!(!fits(&a, &c));
-        assert!(!fits(&c, &a));
+        assert!(!fits(a, b));
+        assert!(fits(b, a));
+        assert!(fits(a, a));
+        assert!(!fits(a, c));
+        assert!(!fits(c, a));
     }
     #[test]
     fn part1() {
