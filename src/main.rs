@@ -36,7 +36,7 @@ fn solve(matchers: &[(char, &str)], f: &str) -> i32 {
     read_to_string(f)
         .unwrap()
         .lines()
-        .map(|x| edge_digits2(matchers, x))
+        .map(|x| edge_digits(matchers, x))
         .map(dgts_to_int)
         .sum()
 }
@@ -76,7 +76,7 @@ fn select(matchers: &[(char, &str)], string: &str, end: End) -> char {
         .0
 }
 
-fn edge_digits2(matchers: &[(char, &str)], x: &str) -> (char, char) {
+fn edge_digits(matchers: &[(char, &str)], x: &str) -> (char, char) {
     (
         select(matchers, x, End::Left),
         select(matchers, x, End::Right),
