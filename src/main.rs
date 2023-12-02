@@ -1,28 +1,5 @@
 use std::fs::read_to_string;
 
-fn solve(matchers: &[(char, &str)], f: &str) -> i32 {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(|x| edge_digits2(matchers, x))
-        .map(dgts_to_int)
-        .sum()
-}
-
-fn main() {
-    println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
-    println!("part 2: {}", solve(DIGITS_AND_STRINGS, "1b.input"));
-}
-
-fn char_to_int(a: char) -> i32 {
-    (a.to_digit(10).unwrap() - '0'.to_digit(10).unwrap()) as i32
-}
-
-fn dgts_to_int(pair: (char, char)) -> i32 {
-    let (tens, ones) = pair;
-    char_to_int(tens) * 10 + char_to_int(ones)
-}
-
 static JUST_DIGITS: &[(char, &str)] = &[
     ('0', "0"),
     ('1', "1"),
@@ -53,6 +30,29 @@ static DIGITS_AND_STRINGS: &[(char, &str)] = &[
 enum End {
     Left,
     Right,
+}
+
+fn solve(matchers: &[(char, &str)], f: &str) -> i32 {
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(|x| edge_digits2(matchers, x))
+        .map(dgts_to_int)
+        .sum()
+}
+
+fn main() {
+    println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
+    println!("part 2: {}", solve(DIGITS_AND_STRINGS, "1b.input"));
+}
+
+fn char_to_int(a: char) -> i32 {
+    (a.to_digit(10).unwrap() - '0'.to_digit(10).unwrap()) as i32
+}
+
+fn dgts_to_int(pair: (char, char)) -> i32 {
+    let (tens, ones) = pair;
+    char_to_int(tens) * 10 + char_to_int(ones)
 }
 
 fn index(end: End, string: &str, matcher: (char, &str)) -> Option<(char, usize)> {
