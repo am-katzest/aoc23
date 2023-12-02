@@ -9,8 +9,18 @@ fn part1(f: &str) -> i32 {
     .sum()
 }
 
+fn part2(f: &str) -> i32 {
+    read_to_string(f)
+    .unwrap()
+    .lines()
+    .map(edge_digits2)
+    .map(dgts_to_int)
+    .sum()
+}
+
 fn main() {
     println!("part 1: {}", part1("1b.input"));
+    println!("part 2: {}", part2("1b.input"));
 }
 
 fn is_digit(x: &char) -> bool {
@@ -31,6 +41,7 @@ fn dgts_to_int(a: (char, char)) -> i32 {
         (tens, digit) => char_to_int(tens) * 10 + char_to_int(digit)
     }
 }
+
 static MATCHERS: &[(char, &str)] =
     &[('0', "0"), ('0', "zero"),
       ('1', "1"), ('1', "one"),
@@ -65,9 +76,14 @@ fn select(string: &str, end:End) -> char{
     .0
 }
 
+fn edge_digits2(x: &str) -> (char,char) {
+    (select(x, End::Left),
+     select(x, End::Right))
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select};
+    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1, index, End, select, part2};
 
     #[test]
     fn is_digit_test() {
@@ -98,6 +114,10 @@ mod tests {
     #[test]
     fn parta_test() {
         assert_eq!(142, part1("1a.input"))
+    }
+    #[test]
+    fn partb_test() {
+        assert_eq!(281, part2("1c.input"))
     }
     #[test]
     fn index_test() {
