@@ -1,6 +1,6 @@
 use std::fs::read_to_string;
 
-fn parta(f: &str) -> i32 {
+fn part1(f: &str) -> i32 {
     read_to_string(f)
     .unwrap()
     .lines()
@@ -8,8 +8,9 @@ fn parta(f: &str) -> i32 {
     .map(dgts_to_int)
     .sum()
 }
+
 fn main() {
-    println!("part a: {}", parta("1a.input"));
+    println!("part 1: {}", part1("1b.input"));
 }
 
 fn is_digit(x: &char) -> bool {
@@ -33,7 +34,7 @@ fn dgts_to_int(a: (char, char)) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, parta};
+    use crate::{is_digit, edge_digits, char_to_int, dgts_to_int, part1};
 
     #[test]
     fn is_digit_test() {
@@ -63,6 +64,6 @@ mod tests {
     }
     #[test]
     fn parta_test() {
-        assert_eq!(142, parta("1a.input"))
+        assert_eq!(142, part1("1a.input"))
     }
 }
