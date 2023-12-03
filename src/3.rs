@@ -1,57 +1,38 @@
-use std::{fs::read_to_string, iter};
+use std::{fs::read_to_string, convert::TryInto};
 
 use itertools::Itertools;
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-enum Thing{
-    Number(i32),
-    Symbol(char),
-    Padding
-}
-
-fn parse_thing(l:&str) -> Thing {
-    match l.parse::<i32>(){
-        Ok(r) => Thing::Number(r),
-        Err(_) => Thing::Symbol(l.chars().next().unwrap()),
-    }
-}
 
 fn is_symbol(t:char) -> bool {
     t != '.' && !t.is_ascii_digit()
 }
 
-fn solve(f:&str) -> i32 {
+fn solve(f:&str, part2:bool) -> i32 {
     let lines: Vec<Vec<char>> = read_to_string(f).unwrap().lines().map(|x| x.chars().collect_vec()).collect_vec();
-    let sizey = lines.len();
-    let sizex = lines.first().unwrap().len();
+    let sizey:i32 = lines.len().try_into().unwrap();
+    let sizex:i32 = lines.first().unwrap().len().try_into().unwrap();
     let mut acc = 0;
     let mut current:i32 = 0;
     let mut current_counts = false;
     let mut reading  = false;
-    let get = |x:usize, y:usize| -> char {
-        match lines.get(y) {
+    let get = |x:i32, y:i32| -> char {
+        if x<0 || y<0 {return '.'}
+        match lines.get(usize::try_from(y).unwrap()) {
             None => '.',
-            Some(line) =>  match line.get(x){
+            Some(line) =>  match line.get(usize::try_from(x).unwrap()){
                 None => '.',
                 Some(&c) => c
             }
         }
     };
 
-    let mut add_number = |dgt:char| {
+    let add_digit = |current:i32, dgt:char| -> i32{
         let n = dgt.to_digit(10).unwrap();
-        current = current * 10 + n as i32;
+        let a = current * 10 + n as i32;
+        a
+
     };
 
-    let mut finish_reading_number = ||{
-        if reading{
-            if current_counts{acc+=current;}
-            current_counts = false;
-            current = 0;
-            reading = false;
-    }};
-
-    let adjectant_to_symbol = |x:usize, y:usize|{
+    let adjectant_to_symbol = |x:i32, y:i32|{
         for xi in x-1..=x+1{
             for yi in y-1..=y+1{
                 if !(xi==x && yi==x){
@@ -61,41 +42,87 @@ fn solve(f:&str) -> i32 {
         }
         false
     };
+    let seek_to_start = |(x, y)|{
+        if !get(x, y).is_digit(10) {return None};
+        let mut xi = x;
+        while get(xi-1, y).is_digit(10){
+          xi -= 1;
+        };
+        Some((xi, y))
+    };
+
+    let read_from_start =|(x, y)|{
+        let mut xi = x;
+        let mut acc = 0;
+        while get(xi, y).is_digit(10) {
+            acc = add_digit(acc, get(xi, y));
+            xi+=1;
+        } // no recursion :despair:
+        acc
+    };
+
+    let calc_gear_ratio = |x:i32, y:i32| -> i32 {
+        let mut indices:Vec<(i32,i32)> = Vec::new();
+
+        for xi in x-1..=x+1{
+            for yi in y-1..=y+1{
+                if !(xi==x && yi==x){
+                    indices.push((xi, yi)); // not too pretty
+                }}}
+        let gear_thingies = indices.iter().copied().filter_map(seek_to_start).unique().map(read_from_start).collect_tuple();
+        match gear_thingies {
+            Some((a, b)) => a * b,
+            None => 0
+        }
+    };
 
     for y in 0..sizey{
-        for x in 0..sizex{
+        for x in 0..=sizex{
             let c = get(x, y);
+            if part2 {
+                if c == '*' {
+                    acc += calc_gear_ratio(x,y);
+                }
+            } else
+                {
+            // getting over the size of array to ensure that numbers are broken
             if c.is_digit(10) {
-                add_number(c);
-                if current_counts {
+                reading = true;
+                current = add_digit(current, c);
+                if !current_counts {
                     if adjectant_to_symbol(x, y){
                         current_counts = true;
                     }
                 }
+            // finish reading the number
             } else {
-                finish_reading_number()
-            }
-        }
+                if reading{
+                    if current_counts{acc+=current;}
+                    current_counts = false;
+                    current = 0;
+                    reading = false;
+                }
+                            }
+                }}
     }
     acc
 }
 
 fn main() {
-    println!("part 1: {}", solve("inputs/3a"));
-//    println!("part 2: {}", solve2("inputs/2b"));
+    println!("part 1: {}", solve("inputs/3b", false));
+    println!("part 2: {}", solve("inputs/3b", true));
 }
+
 
 #[cfg(test)]
 mod tests {
     use crate::*;
-
     #[test]
-    fn parse_test() {
-        assert_eq!(Thing::Number(617),parse_thing("617"));
-        assert_eq!(Thing::Symbol('#'),parse_thing("#"));
+    fn part1() {
+        assert_eq!(4361, solve("inputs/3a", false))
     }
     #[test]
-    fn line_parsing_test() {
-                assert_eq!(vec![Thing::Number(617),Thing::Symbol('*')],parse_line("617*......"));
+    fn part2() {
+        assert_eq!(467835, solve("inputs/3a", true))
     }
 }
