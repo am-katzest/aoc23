@@ -7,6 +7,19 @@ fn is_symbol(t: char) -> bool {
 }
 
 fn solve(f: &str, part2: bool) -> i32 {
+    let neighs = vec![
+        (1, -1),
+        (1, 0),
+        (1, 1),
+        // --
+        (0, -1),
+        //
+        (0, 1),
+        // --
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+    ];
     let lines: Vec<Vec<char>> = read_to_string(f)
         .unwrap()
         .lines()
@@ -38,17 +51,12 @@ fn solve(f: &str, part2: bool) -> i32 {
     };
 
     let adjectant_to_symbol = |x: i32, y: i32| {
-        for xi in x - 1..=x + 1 {
-            for yi in y - 1..=y + 1 {
-                if !(xi == x && yi == x) {
-                    if is_symbol(get(xi, yi)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
+        neighs
+            .iter()
+            .map(|(xo, yo)| (xo + x, yo + y))
+            .any(|(xi, yi)| is_symbol(get(xi, yi)))
     };
+
     let seek_to_start = |(x, y)| {
         if !get(x, y).is_digit(10) {
             return None;
@@ -71,18 +79,9 @@ fn solve(f: &str, part2: bool) -> i32 {
     };
 
     let calc_gear_ratio = |x: i32, y: i32| -> i32 {
-        let mut indices: Vec<(i32, i32)> = Vec::new();
-
-        for xi in x - 1..=x + 1 {
-            for yi in y - 1..=y + 1 {
-                if !(xi == x && yi == x) {
-                    indices.push((xi, yi)); // not too pretty
-                }
-            }
-        }
-        let gear_thingies = indices
+        let gear_thingies = neighs
             .iter()
-            .copied()
+            .map(|(xo, yo)| (xo + x, yo + y))
             .filter_map(seek_to_start)
             .unique()
             .map(read_from_start)
