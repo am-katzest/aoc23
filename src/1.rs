@@ -14,16 +14,26 @@ static JUST_DIGITS: &[(i32, &str)] = &[
 ];
 
 static DIGITS_AND_STRINGS: &[(i32, &str)] = &[
-    (0, "0"), (0, "zero"),
-    (1, "1"), (1, "one"),
-    (2, "2"), (2, "two"),
-    (3, "3"), (3, "three"),
-    (4, "4"), (4, "four"),
-    (5, "5"), (5, "five"),
-    (6, "6"), (6, "six"),
-    (7, "7"), (7, "seven"),
-    (8, "8"), (8, "eight"),
-    (9, "9"), (9, "nine"),
+    (0, "0"),
+    (0, "zero"),
+    (1, "1"),
+    (1, "one"),
+    (2, "2"),
+    (2, "two"),
+    (3, "3"),
+    (3, "three"),
+    (4, "4"),
+    (4, "four"),
+    (5, "5"),
+    (5, "five"),
+    (6, "6"),
+    (6, "six"),
+    (7, "7"),
+    (7, "seven"),
+    (8, "8"),
+    (8, "eight"),
+    (9, "9"),
+    (9, "nine"),
 ];
 
 #[derive(Clone, Copy)]
@@ -55,11 +65,9 @@ fn index(end: End, string: &str, matcher: (i32, &str)) -> Option<(i32, usize)> {
     let (c, sub) = matcher;
     match end {
         End::Left => string.find(sub).map(|position| (c, position)),
-        End::Right => {
-            string.rfind(sub).map(|position| {
-                (c, string.len() - sub.len() - position)
-            })
-        }
+        End::Right => string
+            .rfind(sub)
+            .map(|position| (c, string.len() - sub.len() - position)),
     }
 }
 
@@ -114,5 +122,4 @@ mod tests {
         assert_eq!(6, select(JUST_DIGITS, "onex56xxtwo", End::Right));
         assert_eq!(5, select(JUST_DIGITS, "onex56xxtwo", End::Left));
     }
-
 }
