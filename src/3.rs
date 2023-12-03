@@ -15,37 +15,69 @@ fn parse_thing(l:&str) -> Thing {
         Err(_) => Thing::Symbol(l.chars().next().unwrap()),
     }
 }
-fn parse_line(l:&str) -> Vec<Thing> {
-    l.split('.').filter(|x| x.len() != 0).map(parse_thing).collect()
-}
 
-fn is_symbol(t:Thing) -> bool {
-    match t {
-        Thing::Symbol(_) => true,
-        _ => false,
-    }
-}
-
-fn sum_only_neighbouring(x:Vec<Thing>) -> i32 {
-    iter::once(&Thing::Padding)
-        .chain(x.iter())
-        .chain(iter::once(&Thing::Padding)) // we prepend and append dummy "Padding" Things to the iterator
-        .copied()
-        .tuple_windows()
-        .filter_map(|(l, x, r)| match x{
-            Thing::Number(x) => if is_symbol(l) || is_symbol(r) {Some(x)}else{None}
-            _ => None,
-        })
-        .sum()
+fn is_symbol(t:char) -> bool {
+    t != '.' && !t.is_ascii_digit()
 }
 
 fn solve(f:&str) -> i32 {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(parse_line)
-        .map(sum_only_neighbouring)
-        .sum()
+    let lines: Vec<Vec<char>> = read_to_string(f).unwrap().lines().map(|x| x.chars().collect_vec()).collect_vec();
+    let sizey = lines.len();
+    let sizex = lines.first().unwrap().len();
+    let mut acc = 0;
+    let mut current:i32 = 0;
+    let mut current_counts = false;
+    let mut reading  = false;
+    let get = |x:usize, y:usize| -> char {
+        match lines.get(y) {
+            None => '.',
+            Some(line) =>  match line.get(x){
+                None => '.',
+                Some(&c) => c
+            }
+        }
+    };
+
+    let mut add_number = |dgt:char| {
+        let n = dgt.to_digit(10).unwrap();
+        current = current * 10 + n as i32;
+    };
+
+    let mut finish_reading_number = ||{
+        if reading{
+            if current_counts{acc+=current;}
+            current_counts = false;
+            current = 0;
+            reading = false;
+    }};
+
+    let adjectant_to_symbol = |x:usize, y:usize|{
+        for xi in x-1..=x+1{
+            for yi in y-1..=y+1{
+                if !(xi==x && yi==x){
+                    if is_symbol(get(xi, yi)) {return true;}
+                }
+            }
+        }
+        false
+    };
+
+    for y in 0..sizey{
+        for x in 0..sizex{
+            let c = get(x, y);
+            if c.is_digit(10) {
+                add_number(c);
+                if current_counts {
+                    if adjectant_to_symbol(x, y){
+                        current_counts = true;
+                    }
+                }
+            } else {
+                finish_reading_number()
+            }
+        }
+    }
+    acc
 }
 
 fn main() {
