@@ -78,8 +78,8 @@ fn solve2(f:&str) -> i32 {
 }
 
 fn main() {
-    println!("part 1: {}", solve("2b.input"));
-    println!("part 2: {}", solve2("2b.input"));
+    println!("part 1: {}", solve("inputs/2b"));
+    println!("part 2: {}", solve2("inputs/2b"));
 }
 
 #[cfg(test)]
@@ -110,7 +110,7 @@ mod tests {
     }
     #[test]
     fn part1() {
-        assert_eq!(8, solve("2a.input"));
-        assert_eq!(2286, solve2("2a.input"));
+        assert_eq!(8, solve("inputs/2a"));
+        assert_eq!(2286, solve2("inputs/2a"));
     }
 }

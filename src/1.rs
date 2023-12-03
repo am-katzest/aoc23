@@ -42,8 +42,8 @@ fn solve(matchers: &[(i32, &str)], f: &str) -> i32 {
 }
 
 fn main() {
-    println!("part 1: {}", solve(JUST_DIGITS, "1b.input"));
-    println!("part 2: {}", solve(DIGITS_AND_STRINGS, "1b.input"));
+    println!("part 1: {}", solve(JUST_DIGITS, "inputs/1b"));
+    println!("part 2: {}", solve(DIGITS_AND_STRINGS, "inputs/1b"));
 }
 
 fn dgts_to_int(pair: (i32, i32)) -> i32 {
@@ -90,11 +90,11 @@ mod tests {
     }
     #[test]
     fn parta_test() {
-        assert_eq!(142, solve(JUST_DIGITS, "1a.input"))
+        assert_eq!(142, solve(JUST_DIGITS, "inputs/1a"))
     }
     #[test]
     fn partb_test() {
-        assert_eq!(281, solve(DIGITS_AND_STRINGS, "1c.input"))
+        assert_eq!(281, solve(DIGITS_AND_STRINGS, "inputs/1c"))
     }
     #[test]
     fn index_test() {
