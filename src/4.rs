@@ -92,9 +92,9 @@ mod tests {
             left: vec![41, 48, 83, 86, 17],
             right: vec![0],
         };
-        assert_eq!(3, calc_line_matches(l1));
+        assert_eq!(4, calc_line_matches(l1));
         assert_eq!(0, calc_line_matches(l2));
-        assert_eq!(8, calc_line_points(3));
+        assert_eq!(8, calc_line_points(4));
         assert_eq!(0, calc_line_points(0));
     }
     #[test]
