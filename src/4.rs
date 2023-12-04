@@ -10,17 +10,15 @@ struct Line {
 }
 
 fn parse_subline(l: &str) -> Vec<usize> {
-    // can't use filter_map, sad
-    l.split(' ')
-        .filter(|x| x.len() != 0)
-        .map(|x| x.parse::<usize>().unwrap())
+    l.split_whitespace()
+        .filter_map(|x| x.parse::<usize>().ok())
         .collect()
 }
 
 fn parse_line(l: &str) -> Line {
     let (head, rest) = l.split(':').collect_tuple().unwrap();
     let (left, right) = rest.split('|').map(parse_subline).collect_tuple().unwrap();
-    let id = head.split(' ').last().unwrap().parse::<usize>().unwrap();
+    let id = head.split_whitespace().last().unwrap().parse::<usize>().unwrap();
     Line { id, left, right }
 }
 
