@@ -2,10 +2,9 @@ use std::fs::read_to_string;
 
 use itertools::Itertools;
 
-fn parse_line_of_numbers(l: &str) -> Vec<i64> {
+fn parse_line_of_numbers(l: &str) -> impl Iterator<Item=i64> + '_ {
     l.split_whitespace()
         .filter_map(|x| x.parse::<i64>().ok())
-        .collect()
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -85,8 +84,6 @@ fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
 
 fn parse_mapping(f: &str) -> MapLine {
     let (dest, src, len) = parse_line_of_numbers(f)
-        .iter()
-        .copied()
         .collect_tuple()
         .unwrap();
     MapLine { dest, src, len }
@@ -103,7 +100,7 @@ fn parse_section(f: &str) -> Vec<MapLine> {
 fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
     let s = read_to_string(f).unwrap();
     let mut i = s.split("\n\n");
-    let seeds = parse_line_of_numbers(i.next().unwrap());
+    let seeds = parse_line_of_numbers(i.next().unwrap()).collect();
     let mappings = i.map(parse_section).collect_vec();
 
     (seeds, mappings)
