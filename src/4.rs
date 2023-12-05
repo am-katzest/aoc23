@@ -18,7 +18,12 @@ fn parse_subline(l: &str) -> Vec<usize> {
 fn parse_line(l: &str) -> Line {
     let (head, rest) = l.split(':').collect_tuple().unwrap();
     let (left, right) = rest.split('|').map(parse_subline).collect_tuple().unwrap();
-    let id = head.split_whitespace().last().unwrap().parse::<usize>().unwrap();
+    let id = head
+        .split_whitespace()
+        .last()
+        .unwrap()
+        .parse::<usize>()
+        .unwrap();
     Line { id, left, right }
 }
 

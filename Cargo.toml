@@ -2,7 +2,7 @@
 name = "fuckaround"
 version = "0.1.0"
 edition = "2021"
-default-run = "4"
+default-run = "5"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -24,3 +24,7 @@ path = "src/3.rs"
 [[bin]]
 name = "4"
 path = "src/4.rs"
+
+[[bin]]
+name = "5"
+path = "src/5.rs"
