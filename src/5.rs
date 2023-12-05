@@ -86,18 +86,6 @@ fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
     }).collect_vec()
 }
 
-fn try_translate(i: i64, m: MapLine) -> Option<i64> {
-    if m.src <= i && i < m.src + m.len {
-        Some(i + m.dest - m.src)
-    } else {
-        None
-    }
-}
-
-fn translate(i: i64, ms: &Vec<MapLine>) -> i64 {
-    ms.iter().find_map(|m| try_translate(i, *m)).unwrap_or(i)
-}
-
 fn parse_mapping(f: &str) -> MapLine {
     let (dest, src, len) = parse_line_of_numbers(f)
         .iter()
@@ -124,43 +112,30 @@ fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
     (seeds, mappings)
 }
 
+fn advance_ranges(mappings: Vec<Vec<MapLine>>, seed_ranges: Vec<Range>) -> i64 {
+    mappings.iter().fold(seed_ranges, translate_ranges).iter().map(|x| x.start).min().unwrap()
+}
 fn solve(f: &str) -> i64 {
-    let (seeds, mappings) = parse(f);
-    seeds
-        .iter()
-        .copied()
-        .map(|seed| mappings.iter().fold(seed, |s, maps| translate(s, maps)))
-        .min()
-        .unwrap()
+    let (s, mappings) = parse(f);
+    let seed_ranges = s.iter().copied().map(|start| Range {start, len: 1}).collect_vec();
+    advance_ranges(mappings, seed_ranges)
 }
 fn solve2(f: & str) -> i64 {
     let (s, mappings) = parse(f);
     let seed_ranges = s.iter().copied().tuples().map(|(start, len)| Range {start, len}).collect_vec();
-    mappings.iter().fold(seed_ranges, translate_ranges).iter().map(|x| x.start).min().unwrap()
+    advance_ranges(mappings, seed_ranges)
 }
+
 
 fn main() {
     println!("part 1: {}", solve("inputs/5b"));
-    println!("part 2: {}", solve2("inputs/5a"));
+    println!("part 2: {}", solve2("inputs/5b"));
 }
 
+//part 2: 75221860 // too low ;-;
 #[cfg(test)]
 mod tests {
     use crate::*;
-    #[test]
-    fn try_apply_test() {
-        let ml = MapLine {
-            dest: 40,
-            src: 50,
-            len: 5,
-        };
-
-        assert_eq!(None, try_translate(3, ml));
-        assert_eq!(None, try_translate(49, ml));
-        assert_eq!(Some(40), try_translate(50, ml));
-        assert_eq!(Some(44), try_translate(54, ml));
-        assert_eq!(None, try_translate(55, ml));
-    }
     #[test]
     fn try_range_apply_test() {
         let ml = MapLine {
