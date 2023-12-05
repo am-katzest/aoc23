@@ -73,7 +73,7 @@ fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
         i.iter().copied().map(|x| try_translate_range(x, m).iter().copied().filter_map(|x| match x {
             Res::Mapped(x) => {result.push(x); None},
             Res::Unmapped(x) => Some(x)
-        }).collect_vec()).concat()
+        }).collect()).concat()
     };
     ms.iter()
       .copied()
@@ -101,7 +101,7 @@ fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
     let s = read_to_string(f).unwrap();
     let mut i = s.split("\n\n");
     let seeds = parse_line_of_numbers(i.next().unwrap()).collect();
-    let mappings = i.map(parse_section).collect_vec();
+    let mappings = i.map(parse_section).collect();
 
     (seeds, mappings)
 }
@@ -111,12 +111,12 @@ fn advance_ranges(mappings: Vec<Vec<MapLine>>, seed_ranges: Vec<Range>) -> i64 {
 }
 fn solve(f: &str) -> i64 {
     let (s, mappings) = parse(f);
-    let seed_ranges = s.iter().copied().map(|start| Range {start, len: 1}).collect_vec();
+    let seed_ranges = s.iter().copied().map(|start| Range {start, len: 1}).collect();
     advance_ranges(mappings, seed_ranges)
 }
 fn solve2(f: & str) -> i64 {
     let (s, mappings) = parse(f);
-    let seed_ranges = s.iter().copied().tuples().map(|(start, len)| Range {start, len}).collect_vec();
+    let seed_ranges = s.iter().copied().tuples().map(|(start, len)| Range {start, len}).collect();
     advance_ranges(mappings, seed_ranges)
 }
 
