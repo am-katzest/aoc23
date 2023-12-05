@@ -66,7 +66,7 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
     }
 }
 
-fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
+fn translate_ranges(rs:Vec<Range>, ms:Vec<MapLine>) -> Vec<Range> {
     // applies for every range, applies try_translate_range in all possible ways
     let mut result:Vec<Range> = vec![];
     let reducer = |i:Vec<Range>, m:MapLine| {
@@ -107,7 +107,7 @@ fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
 }
 
 fn advance_ranges(mappings: Vec<Vec<MapLine>>, seed_ranges: Vec<Range>) -> i64 {
-    mappings.iter().fold(seed_ranges, translate_ranges).iter().map(|x| x.start).min().unwrap()
+    mappings.into_iter().fold(seed_ranges, translate_ranges).iter().map(|x| x.start).min().unwrap()
 }
 fn solve(f: &str) -> i64 {
     let (s, mappings) = parse(f);
