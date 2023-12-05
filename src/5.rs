@@ -24,13 +24,7 @@ fn try_apply_mapping(i: u32, m: MapLine) -> Option<u32> {
 }
 
 fn apply_mappings(i: u32, ms: &Vec<MapLine>) -> u32 {
-    for m in ms {
-        match try_apply_mapping(i, *m) {
-            Some(o) => return o,
-            _ => (),
-        }
-    }
-    i
+    ms.iter().find_map(|m| try_apply_mapping(i, *m)).unwrap_or(i)
 }
 
 fn parse_mapping(f: &str) -> MapLine {
@@ -143,6 +137,5 @@ mod tests {
     #[test]
     fn part1() {
         assert_eq!(35,solve("inputs/5a"));
-
     }
 }
