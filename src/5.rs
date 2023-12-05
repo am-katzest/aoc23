@@ -2,20 +2,20 @@ use std::fs::read_to_string;
 
 use itertools::Itertools;
 
-fn parse_line_of_numbers(l: &str) -> Vec<u32> {
+fn parse_line_of_numbers(l: &str) -> Vec<u64> {
     l.split_whitespace()
-        .filter_map(|x| x.parse::<u32>().ok())
+        .filter_map(|x| x.parse::<u64>().ok())
         .collect()
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct MapLine {
-    dest: u32,
-    src: u32,
-    len: u32,
+    dest: u64,
+    src: u64,
+    len: u64,
 }
 
-fn try_apply_mapping(i: u32, m: MapLine) -> Option<u32> {
+fn try_apply_mapping(i: u64, m: MapLine) -> Option<u64> {
     if m.src <= i && i < m.src + m.len {
         Some(i + m.dest - m.src)
     } else {
@@ -23,7 +23,7 @@ fn try_apply_mapping(i: u32, m: MapLine) -> Option<u32> {
     }
 }
 
-fn apply_mappings(i: u32, ms: &Vec<MapLine>) -> u32 {
+fn apply_mappings(i: u64, ms: &Vec<MapLine>) -> u64 {
     ms.iter().find_map(|m| try_apply_mapping(i, *m)).unwrap_or(i)
 }
 
@@ -44,17 +44,16 @@ fn parse_section(f: &str) -> Vec<MapLine> {
         .collect()
 }
 
-fn parse(f: &str) -> (Vec<u32>, Vec<Vec<MapLine>>) {
+fn parse(f: &str) -> (Vec<u64>, Vec<Vec<MapLine>>) {
     let s = read_to_string(f).unwrap();
     let mut i = s.split("\n\n");
     let seeds = parse_line_of_numbers(i.next().unwrap());
     let mappings = i.map(parse_section).collect_vec();
-    mappings.iter().for_each(|x| println!("{:?}", x));
 
     (seeds, mappings)
 }
 
-fn solve(f: &str) -> u32 {
+fn solve(f: &str) -> u64 {
     let (seeds, mappings) = parse(f);
     seeds
         .iter()
@@ -69,7 +68,7 @@ fn solve(f: &str) -> u32 {
 }
 
 fn main() {
-    println!("part 1: {}", solve("inputs/5a"));
+    println!("part 1: {}", solve("inputs/5b"));
     //println!("part 2: {}", solve2("inputs/4b"));
 }
 
