@@ -1,4 +1,4 @@
-use std::fs::read_to_string;
+use std::{fs::read_to_string, ptr::null};
 
 use itertools::Itertools;
 
@@ -24,7 +24,9 @@ fn try_apply_mapping(i: u64, m: MapLine) -> Option<u64> {
 }
 
 fn apply_mappings(i: u64, ms: &Vec<MapLine>) -> u64 {
-    ms.iter().find_map(|m| try_apply_mapping(i, *m)).unwrap_or(i)
+    ms.iter()
+        .find_map(|m| try_apply_mapping(i, *m))
+        .unwrap_or(i)
 }
 
 fn parse_mapping(f: &str) -> MapLine {
@@ -77,64 +79,20 @@ mod tests {
     use crate::*;
     #[test]
     fn try_apply_test() {
-        assert_eq!(
-            None,
-            try_apply_mapping(
-                3,
-                MapLine {
-                    dest: 40,
-                    src: 50,
-                    len: 5
-                }
-            )
-        );
-        assert_eq!(
-            None,
-            try_apply_mapping(
-                49,
-                MapLine {
-                    dest: 40,
-                    src: 50,
-                    len: 5
-                }
-            )
-        );
-        assert_eq!(
-            Some(40),
-            try_apply_mapping(
-                50,
-                MapLine {
-                    dest: 40,
-                    src: 50,
-                    len: 5
-                }
-            )
-        );
-        assert_eq!(
-            Some(44),
-            try_apply_mapping(
-                54,
-                MapLine {
-                    dest: 40,
-                    src: 50,
-                    len: 5
-                }
-            )
-        );
-        assert_eq!(
-            None,
-            try_apply_mapping(
-                55,
-                MapLine {
-                    dest: 40,
-                    src: 50,
-                    len: 5
-                }
-            )
-        );
+        let ml = MapLine {
+            dest: 40,
+            src: 50,
+            len: 5,
+        };
+
+        assert_eq!(None, try_apply_mapping(3, ml));
+        assert_eq!(None, try_apply_mapping(49, ml));
+        assert_eq!(Some(40), try_apply_mapping(50, ml));
+        assert_eq!(Some(44), try_apply_mapping(54, ml));
+        assert_eq!(None, try_apply_mapping(55, ml));
     }
     #[test]
     fn part1() {
-        assert_eq!(35,solve("inputs/5a"));
+        assert_eq!(35, solve("inputs/5a"));
     }
 }
