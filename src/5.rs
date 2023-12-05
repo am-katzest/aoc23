@@ -32,52 +32,37 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
     let re = r.start + r.len;
     let ms = m.src;
     let me = m.src + m.len;
-    let transform: i64 = m.dest - m.src;
+    let transform = m.dest - m.src;
+    let dist = ms - rs;
+    let mapped = |start, len| Res::Mapped(Range {start, len});
+    let unmapped = |start, len| Res::Unmapped(Range {start, len});
     // could possibly be done by always creating three ranges, then filtering i think
-    if rs >= me || ms >= re {
-        // range entirely outside map
-        return vec![Res::Unmapped(r)];
-    } else if re <= me && rs >= ms {
-        // range entirely fits in map
-        return vec![Res::Mapped(Range {
-            start: rs + transform,
-            len: r.len,
-        })];
-    } else if rs < ms && re > me {
-        // range exceeds mapping on both ends
-        let left = Range {start: rs, len: ms - rs};
-        let middle = Range {start: m.dest, len: m.len};
-        let right = Range {start: me, len: r.len - (ms-rs) - m.len };
-        return vec![Res::Unmapped(left),
-                    Res::Mapped(middle),
-                    Res::Unmapped(right)];
-    } else if re <= me {
-        // range exceeds mapping on the left
-        let left = Range {start: rs, len: ms - rs};
-        let middle = Range {start: m.dest, len: r.len - (ms - rs)};
-        return vec![Res::Unmapped(left),
-                    Res::Mapped(middle)];
-    } else {
-        // range exceeds mapping on the right
-        let middle = Range {start: m.dest + rs - ms, len: me - rs};
-        let right = Range {start: me, len: r.len - (me-rs)};
-        return vec![Res::Mapped(middle),
-                    Res::Unmapped(right)];
+    if rs >= me || ms >= re {// range entirely outside map
+        vec![unmapped(rs, r.len)]
+    } else if re <= me && rs >= ms {// range entirely fits in map
+        vec![mapped(rs + transform, r.len)]
+    } else if rs < ms && re > me {// range exceeds mapping on both ends
+        vec! [unmapped(rs, dist),
+              mapped(m.dest, m.len),
+              unmapped(me, r.len - dist - m.len)]
+    } else if re <= me {// range exceeds mapping on the left
+        vec![unmapped(rs, dist), mapped(m.dest, r.len - dist)]
+    } else {// range exceeds mapping on the right
+        vec![mapped(rs + transform, me - rs), unmapped(me, r.len - me + rs)]
     }
 }
 
 fn translate_ranges(rs:Vec<Range>, ms:Vec<MapLine>) -> Vec<Range> {
     // applies for every range, applies try_translate_range in all possible ways
     let mut result:Vec<Range> = vec![];
-    let reducer = |i:Vec<Range>, m:MapLine| {
+    ms.iter()
+      .copied()
+      .fold(rs, |i:Vec<Range>, m:MapLine| {
         i.into_iter().map(|x| try_translate_range(x, m).into_iter().filter_map(|x| match x {
             Res::Mapped(x) => {result.push(x); None},
             Res::Unmapped(x) => Some(x)
         }).collect()).concat()
-    };
-    ms.iter()
-      .copied()
-      .fold(rs, reducer)
+    })
       .into_iter().for_each(|x| result.push(x));
     result
 }
