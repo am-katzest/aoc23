@@ -1,24 +1,24 @@
-use std::{fs::read_to_string, ptr::null};
+use std::fs::read_to_string;
 
 use itertools::Itertools;
 
-fn parse_line_of_numbers(l: &str) -> Vec<u64> {
+fn parse_line_of_numbers(l: &str) -> Vec<i64> {
     l.split_whitespace()
-        .filter_map(|x| x.parse::<u64>().ok())
+        .filter_map(|x| x.parse::<i64>().ok())
         .collect()
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct MapLine {
-    dest: u64,
-    src: u64,
-    len: u64,
+    dest: i64,
+    src: i64,
+    len: i64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Range {
-    start: u64,
-    len: u64,
+    start: i64,
+    len: i64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -27,12 +27,27 @@ enum Res {
     Unmapped(Range),
 }
 
-fn try_apply_mapping_range(i: Range, m: MapLine) -> Vec<Res> {
+fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
+    let rs = r.start;
+    let re = r.start + r.len;
+    let ms = m.src;
+    let me = m.src + m.len;
+    let transform: i64 = m.dest - m.src;
+    if rs > me || ms > re {
+        // range entirely outside map
+        return vec![Res::Unmapped(r)];
+    } else if re < me && rs > ms {
+        // range entirely fits in map
+        return vec![Res::Mapped(Range {
+            start: rs + transform,
+            len: r.len,
+        })];
+    }
     // maps what it can, returns up to three MappingResults
     vec![]
 }
 
-fn try_apply_mapping(i: u64, m: MapLine) -> Option<u64> {
+fn try_translate(i: i64, m: MapLine) -> Option<i64> {
     if m.src <= i && i < m.src + m.len {
         Some(i + m.dest - m.src)
     } else {
@@ -40,10 +55,8 @@ fn try_apply_mapping(i: u64, m: MapLine) -> Option<u64> {
     }
 }
 
-fn apply_mappings(i: u64, ms: &Vec<MapLine>) -> u64 {
-    ms.iter()
-        .find_map(|m| try_apply_mapping(i, *m))
-        .unwrap_or(i)
+fn translate(i: i64, ms: &Vec<MapLine>) -> i64 {
+    ms.iter().find_map(|m| try_translate(i, *m)).unwrap_or(i)
 }
 
 fn parse_mapping(f: &str) -> MapLine {
@@ -63,7 +76,7 @@ fn parse_section(f: &str) -> Vec<MapLine> {
         .collect()
 }
 
-fn parse(f: &str) -> (Vec<u64>, Vec<Vec<MapLine>>) {
+fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
     let s = read_to_string(f).unwrap();
     let mut i = s.split("\n\n");
     let seeds = parse_line_of_numbers(i.next().unwrap());
@@ -72,16 +85,12 @@ fn parse(f: &str) -> (Vec<u64>, Vec<Vec<MapLine>>) {
     (seeds, mappings)
 }
 
-fn solve(f: &str) -> u64 {
+fn solve(f: &str) -> i64 {
     let (seeds, mappings) = parse(f);
     seeds
         .iter()
         .copied()
-        .map(|seed| {
-            mappings
-                .iter()
-                .fold(seed, |s, maps| apply_mappings(s, maps))
-        })
+        .map(|seed| mappings.iter().fold(seed, |s, maps| translate(s, maps)))
         .min()
         .unwrap()
 }
@@ -102,11 +111,11 @@ mod tests {
             len: 5,
         };
 
-        assert_eq!(None, try_apply_mapping(3, ml));
-        assert_eq!(None, try_apply_mapping(49, ml));
-        assert_eq!(Some(40), try_apply_mapping(50, ml));
-        assert_eq!(Some(44), try_apply_mapping(54, ml));
-        assert_eq!(None, try_apply_mapping(55, ml));
+        assert_eq!(None, try_translate(3, ml));
+        assert_eq!(None, try_translate(49, ml));
+        assert_eq!(Some(40), try_translate(50, ml));
+        assert_eq!(Some(44), try_translate(54, ml));
+        assert_eq!(None, try_translate(55, ml));
     }
     #[test]
     fn try_range_apply_test() {
@@ -115,9 +124,9 @@ mod tests {
             src: 50,
             len: 5,
         };
-        let fully_inside = Range {start: 41, len: 2};
-        let mrfi = vec![Res::Mapped(Range {start: 51, len:2})];
-        assert_eq!(mrfi, try_apply_mapping_range(fully_inside, ml));
+        let fully_inside = Range { start: 41, len: 2 };
+        let mrfi = vec![Res::Mapped(Range { start: 51, len: 2 })];
+        assert_eq!(mrfi, try_translate_range(fully_inside, ml));
     }
     #[test]
     fn part1() {
