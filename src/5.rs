@@ -15,6 +15,23 @@ struct MapLine {
     len: u64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Range {
+    start: u64,
+    len: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Res {
+    Mapped(Range),
+    Unmapped(Range),
+}
+
+fn try_apply_mapping_range(i: Range, m: MapLine) -> Vec<Res> {
+    // maps what it can, returns up to three MappingResults
+    vec![]
+}
+
 fn try_apply_mapping(i: u64, m: MapLine) -> Option<u64> {
     if m.src <= i && i < m.src + m.len {
         Some(i + m.dest - m.src)
@@ -90,6 +107,17 @@ mod tests {
         assert_eq!(Some(40), try_apply_mapping(50, ml));
         assert_eq!(Some(44), try_apply_mapping(54, ml));
         assert_eq!(None, try_apply_mapping(55, ml));
+    }
+    #[test]
+    fn try_range_apply_test() {
+        let ml = MapLine {
+            dest: 40,
+            src: 50,
+            len: 5,
+        };
+        let fully_inside = Range {start: 41, len: 2};
+        let mrfi = vec![Res::Mapped(Range {start: 51, len:2})];
+        assert_eq!(mrfi, try_apply_mapping_range(fully_inside, ml));
     }
     #[test]
     fn part1() {
