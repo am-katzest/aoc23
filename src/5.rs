@@ -45,6 +45,14 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
             start: rs + transform,
             len: r.len,
         })];
+    } else if rs < ms && re > me {
+        // range exceeds mapping on both ends
+        let left = Range {start: rs, len: ms - rs};
+        let middle = Range {start: m.dest, len: m.len};
+        let right = Range {start: me, len: r.len - (ms-rs) - m.len }; // TODO
+        return vec![Res::Unmapped(left),
+                    Res::Mapped(middle),
+                    Res::Unmapped(right)];
     }
     vec![]
 }
@@ -154,6 +162,13 @@ mod tests {
             vec![Res::Unmapped(Range { start: 110, len: 5 })],
             try_translate_range(Range { start: 110, len: 5 }, ml)
         );
+        // exceeding
+        assert_eq!(
+            vec![Res::Unmapped(Range { start: 85, len: 15 }),
+                 Res::Mapped(Range { start: 200, len: 10 }),
+                 Res::Unmapped(Range { start: 110, len: 15 })],
+            try_translate_range(Range { start: 85, len: 40 }, ml)
+        )
     }
     #[test]
     fn part1() {
