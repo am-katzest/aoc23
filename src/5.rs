@@ -28,22 +28,24 @@ enum Res {
 }
 
 fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
+    // maps what it can, returns up to three MappingResults
     let rs = r.start;
     let re = r.start + r.len;
     let ms = m.src;
     let me = m.src + m.len;
     let transform: i64 = m.dest - m.src;
-    if rs > me || ms > re {
+    println!("r:{}-{} m:{}-{}", rs, re, ms, me);
+    // could possibly be done by always creating three ranges, then filtering i think
+    if rs >= me || ms >= re {
         // range entirely outside map
         return vec![Res::Unmapped(r)];
-    } else if re < me && rs > ms {
+    } else if re <= me && rs >= ms {
         // range entirely fits in map
         return vec![Res::Mapped(Range {
             start: rs + transform,
             len: r.len,
         })];
     }
-    // maps what it can, returns up to three MappingResults
     vec![]
 }
 
@@ -120,13 +122,38 @@ mod tests {
     #[test]
     fn try_range_apply_test() {
         let ml = MapLine {
-            dest: 40,
-            src: 50,
-            len: 5,
+            dest: 200,
+            src: 100,
+            len: 10,
         };
-        let fully_inside = Range { start: 41, len: 2 };
-        let mrfi = vec![Res::Mapped(Range { start: 51, len: 2 })];
-        assert_eq!(mrfi, try_translate_range(fully_inside, ml));
+        // wholly inside
+        assert_eq!(
+            vec![Res::Mapped(Range { start: 201, len: 2 })],
+            try_translate_range(Range { start: 101, len: 2 }, ml)
+        );
+        // touching
+        assert_eq!(
+            vec![Res::Mapped(Range { start: 200, len: 10 })],
+            try_translate_range(Range { start: 100, len: 10 }, ml)
+        );
+        // wholly outside
+        assert_eq!(
+            vec![Res::Unmapped(Range { start: 145, len: 5 })],
+            try_translate_range(Range { start: 145, len: 5 }, ml)
+        );
+        assert_eq!(
+            vec![Res::Unmapped(Range { start: 5, len: 5 })],
+            try_translate_range(Range { start: 5, len: 5 }, ml)
+        );
+        // touching
+        assert_eq!(
+            vec![Res::Unmapped(Range { start: 95, len: 5 })],
+            try_translate_range(Range { start: 95, len: 5 }, ml)
+        );
+        assert_eq!(
+            vec![Res::Unmapped(Range { start: 110, len: 5 })],
+            try_translate_range(Range { start: 110, len: 5 }, ml)
+        );
     }
     #[test]
     fn part1() {
