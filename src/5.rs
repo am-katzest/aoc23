@@ -34,7 +34,6 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
     let ms = m.src;
     let me = m.src + m.len;
     let transform: i64 = m.dest - m.src;
-    println!("r:{}-{} m:{}-{}", rs, re, ms, me);
     // could possibly be done by always creating three ranges, then filtering i think
     if rs >= me || ms >= re {
         // range entirely outside map
@@ -66,6 +65,25 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
         return vec![Res::Mapped(middle),
                     Res::Unmapped(right)];
     }
+}
+
+fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
+    let is = rs.iter().copied().map(|x| Res::Unmapped(x)).collect_vec();
+    fn reducer(i:Vec<Res>, m:MapLine) -> Vec<Res> {
+        i.iter().copied().map(|x| match x {
+            Res::Unmapped(x) => try_translate_range(x, m),
+            x => vec![x]}
+        ).concat()
+    }
+    ms.iter()
+      .copied()
+      .fold(is, reducer)
+      .iter()
+      .copied()
+      .map(|x| match x {
+        Res::Unmapped(x)  => x,
+        Res::Mapped(x)  => x
+    }).collect_vec()
 }
 
 fn try_translate(i: i64, m: MapLine) -> Option<i64> {
@@ -115,10 +133,15 @@ fn solve(f: &str) -> i64 {
         .min()
         .unwrap()
 }
+fn solve2(f: & str) -> i64 {
+    let (s, mappings) = parse(f);
+    let seed_ranges = s.iter().copied().tuples().map(|(start, len)| Range {start, len}).collect_vec();
+    mappings.iter().fold(seed_ranges, translate_ranges).iter().map(|x| x.start).min().unwrap()
+}
 
 fn main() {
     println!("part 1: {}", solve("inputs/5b"));
-    //println!("part 2: {}", solve2("inputs/4b"));
+    println!("part 2: {}", solve2("inputs/5a"));
 }
 
 #[cfg(test)]
@@ -205,8 +228,12 @@ mod tests {
             try_translate_range(Range { start: 100, len: 40 }, ml)
         );
     }
-    #[test]
+#[test]
     fn part1() {
         assert_eq!(35, solve("inputs/5a"));
+    }
+#[test]
+    fn part2() {
+        assert_eq!(46, solve2("inputs/5a"));
     }
 }
