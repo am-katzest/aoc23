@@ -68,22 +68,19 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
 }
 
 fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
-    let is = rs.iter().copied().map(|x| Res::Unmapped(x)).collect_vec();
-    fn reducer(i:Vec<Res>, m:MapLine) -> Vec<Res> {
-        i.iter().copied().map(|x| match x {
-            Res::Unmapped(x) => try_translate_range(x, m),
-            x => vec![x]} // don't touch already mapped values
-        ).concat()
-    }
+    // applies for every range, applies try_translate_range in all possible ways
+    let mut result:Vec<Range> = vec![];
+    let reducer = |i:Vec<Range>, m:MapLine| {
+        i.iter().copied().map(|x| try_translate_range(x, m).iter().copied().filter_map(|x| match x {
+            Res::Mapped(x) => {result.push(x); None},
+            Res::Unmapped(x) => Some(x)
+        }).collect_vec()).concat()
+    };
     ms.iter()
       .copied()
-      .fold(is, reducer)
-      .iter()
-      .copied()
-      .map(|x| match x {
-        Res::Unmapped(x)  => x,
-        Res::Mapped(x)  => x
-    }).collect_vec()
+      .fold(rs, reducer)
+      .iter().copied().for_each(|x| result.push(x));
+    result
 }
 
 fn parse_mapping(f: &str) -> MapLine {
