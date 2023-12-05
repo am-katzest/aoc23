@@ -60,8 +60,8 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
                     Res::Mapped(middle)];
     } else {
         // range exceeds mapping on the right
-        let middle = Range {start: m.dest + rs - ms, len: m.len};
-        let right = Range {start: me, len: r.len - (ms-rs) - m.len };
+        let middle = Range {start: m.dest + rs - ms, len: me - rs};
+        let right = Range {start: me, len: r.len - (me-rs)};
         return vec![Res::Mapped(middle),
                     Res::Unmapped(right)];
     }
@@ -72,7 +72,7 @@ fn translate_ranges(rs:Vec<Range>, ms:&Vec<MapLine>) -> Vec<Range> {
     fn reducer(i:Vec<Res>, m:MapLine) -> Vec<Res> {
         i.iter().copied().map(|x| match x {
             Res::Unmapped(x) => try_translate_range(x, m),
-            x => vec![x]}
+            x => vec![x]} // don't touch already mapped values
         ).concat()
     }
     ms.iter()
@@ -192,7 +192,7 @@ mod tests {
         );
         // exceeding right
         assert_eq!(
-            vec![Res::Mapped(Range { start: 205, len: 10 }),
+            vec![Res::Mapped(Range { start: 205, len: 5 }),
                  Res::Unmapped(Range { start: 110, len: 30 })],
             try_translate_range(Range { start: 105, len: 35 }, ml)
         );
