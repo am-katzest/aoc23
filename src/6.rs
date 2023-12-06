@@ -14,6 +14,20 @@ fn parse(f: &str) -> impl Iterator<Item = (i64, i64)> + '_ {
         .unwrap();
     std::iter::zip(a, b)
 }
+fn parse2(f: &str) -> (i64, i64) {
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(|l| {
+            l.chars()
+                .filter(|c| c.is_numeric())
+                .collect::<String>()
+                .parse::<i64>()
+                .unwrap()
+        })
+        .collect_tuple()
+        .unwrap()
+}
 // (t, min_distance)
 // distance = (t - x) * x
 // distance = x*t - x^2
@@ -45,10 +59,13 @@ fn solve(f: &str) -> i64 {
         .map(|(x, y)| y - x + 1)
         .fold(1, |x, y| x * y)
 }
+fn solve2(f: &str) -> i64 {
+    let (x, y) = get_range(parse2(f));
+    y - x + 1
 }
 fn main() {
     println!("part 1: {:?}", solve("inputs/6b"));
-    //println!("part 2: {}", solve2("inputs/5b"));
+    println!("part 2: {:?}", solve2("inputs/6b"));
 }
 
 #[cfg(test)]
@@ -66,6 +83,6 @@ mod tests {
     }
     #[test]
     fn part2() {
-        //assert_eq!(46, solve2("inputs/5a"));
+        assert_eq!(71503, solve2("inputs/6a"));
     }
 }
