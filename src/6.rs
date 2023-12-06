@@ -47,10 +47,37 @@ fn roots(a: i64, b: i64, c: i64) -> (f64, f64) {
     let minus_b = -b as f64;
     ((minus_b + sqrt_delta) / twoa, (minus_b - sqrt_delta) / twoa)
 }
+fn find_bound(start:i64, time : i64, distance : i64, above:bool) -> i64 { // can't pass lambda
+    let f = |x:i64| -x*x + x*time - distance; // f
+    let d = |x:i64| -2*x + time; // f'
+    // newthon method
+    let mut prev = -1;
+    let mut curr = start;
+    while prev != curr {
+        println!("{start} -> {curr} {above}");
+        prev = curr;
+        curr = curr - f(curr) / (10*d(curr)); // more stability
+    }
+    if !above {
+        curr -= 10;
+        loop {
+            if f(curr) >0 {return curr}
+            curr += 1;
+        }
+    } else {
+        curr += 10;
+        loop {
+            if f(curr) >0 {return curr}
+            curr -= 1;
+        }
+    }
+}
 fn get_range((time, distance): (i64, i64)) -> (i64, i64) {
-    let (a, b) = roots(-1, time, -distance);
-    println!("{time} {distance} -> {a} {b}");
-    (a as i64 + 1, (b - 1e-9) as i64) // HACK, will probably backfire
+    let bound1 = find_bound(0, time, distance, false);
+    println!("found bound 1");
+    let bound2 = find_bound(bound1*50, time, distance, true);
+    println!("{bound1} {bound2}");
+    (bound1, bound2)
 }
 
 fn solve(f: &str) -> i64 {
@@ -64,6 +91,7 @@ fn solve2(f: &str) -> i64 {
     y - x + 1
 }
 fn main() {
+    println!("part 1: {:?}", solve("inputs/6a"));
     println!("part 1: {:?}", solve("inputs/6b"));
     println!("part 2: {:?}", solve2("inputs/6b"));
 }
