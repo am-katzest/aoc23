@@ -63,13 +63,12 @@ fn classify(cards: &Vec<Card>) -> HandType {
     }
 }
 
-fn parse_card(c: char) -> Card {
+fn parse_card(c: char, j: Card) -> Card {
     match c {
         'A' => Card::Ace,
         'K' => Card::King,
         'Q' => Card::Queen,
-        'J' => Card::Jack,
-        'X' => Card::Joker,
+        'J' => j,
         'T' => Card::Ten,
         '9' => Card::Nine,
         '8' => Card::Eight,
@@ -83,24 +82,19 @@ fn parse_card(c: char) -> Card {
     }
 }
 
-fn parse_hand(h: &str) -> Hand {
-    let cards = h.chars().map(parse_card).collect::<Vec<Card>>();
+fn parse_hand(h: &str, j: Card) -> Hand {
+    let cards = h.chars().map(|x| parse_card(x, j)).collect::<Vec<Card>>();
     let t = classify(&cards);
     Hand { cards, t }
 }
 
-fn parse_line(l: &str) -> (Hand, usize) {
+fn parse_line(l: &str, j: Card) -> (Hand, usize) {
     let (f, s) = l.split(" ").collect_tuple().unwrap();
-    (parse_hand(f), s.parse().unwrap())
+    (parse_hand(f, j), s.parse().unwrap())
 }
 
 fn parse(f: &str, j: Card) -> Vec<(Hand, usize)> {
-    let r = match j {
-        Card::Joker => 'X',
-        Card::Jack => 'J',
-        _ => panic!()
-    };
-    read_to_string(f).unwrap().chars().map(|c| if c == 'J' {r} else {c}).collect::<String>() .lines().map(parse_line).collect()
+    read_to_string(f).unwrap().lines().map(|x| parse_line(x, j)).collect()
 }
 
 fn solve(deck: Vec<(Hand, usize)>) -> usize {
@@ -119,29 +113,31 @@ mod tests {
 
     #[test]
     fn hand_parsing_test() {
-        assert_eq!(HandType::FiveofAKind, parse_hand("33333").t);
-        assert_eq!(HandType::FullHouse, parse_hand("32323").t);
-        assert_eq!(HandType::FourofAKind, parse_hand("44442").t);
-        assert_eq!(HandType::ThreeOfAKind, parse_hand("444AQ").t);
-        assert_eq!(HandType::TwoPair, parse_hand("2323A").t);
-        assert_eq!(HandType::OnePair, parse_hand("55234").t);
-        assert_eq!(HandType::HighCard, parse_hand("62345").t);
+        let jack = |x| parse_hand(x, Card::Jack);
+        let joker = |x| parse_hand(x, Card::Joker);
+        assert_eq!(HandType::FiveofAKind, jack("33333").t);
+        assert_eq!(HandType::FullHouse, jack("32323").t);
+        assert_eq!(HandType::FourofAKind, jack("44442").t);
+        assert_eq!(HandType::ThreeOfAKind, jack("444AQ").t);
+        assert_eq!(HandType::TwoPair, jack("2323A").t);
+        assert_eq!(HandType::OnePair, jack("55234").t);
+        assert_eq!(HandType::HighCard, jack("62345").t);
 
-        assert_eq!(HandType::FiveofAKind, parse_hand("5555X").t);
-        assert_eq!(HandType::FiveofAKind, parse_hand("555XX").t);
-        assert_eq!(HandType::FiveofAKind, parse_hand("55XXX").t);
-        assert_eq!(HandType::FiveofAKind, parse_hand("5XXXX").t);
-        assert_eq!(HandType::FiveofAKind, parse_hand("XXXXX").t);
+        assert_eq!(HandType::FiveofAKind, joker("5555J").t);
+        assert_eq!(HandType::FiveofAKind, joker("555JJ").t);
+        assert_eq!(HandType::FiveofAKind, joker("55JJJ").t);
+        assert_eq!(HandType::FiveofAKind, joker("5JJJJ").t);
+        assert_eq!(HandType::FiveofAKind, joker("JJJJJ").t);
 
-        assert_eq!(HandType::FourofAKind, parse_hand("5553X").t);
-        assert_eq!(HandType::FourofAKind, parse_hand("553XX").t);
-        assert_eq!(HandType::FourofAKind, parse_hand("53XXX").t);
+        assert_eq!(HandType::FourofAKind, joker("5553J").t);
+        assert_eq!(HandType::FourofAKind, joker("553JJ").t);
+        assert_eq!(HandType::FourofAKind, joker("53JJJ").t);
 
-        assert_eq!(HandType::FullHouse, parse_hand("5533X").t);
+        assert_eq!(HandType::FullHouse, joker("5533J").t);
 
-        assert_eq!(HandType::ThreeOfAKind, parse_hand("234XX").t);
+        assert_eq!(HandType::ThreeOfAKind, joker("234JJ").t);
 
-        assert_eq!(HandType::OnePair, parse_hand("5234X").t);
+        assert_eq!(HandType::OnePair, joker("5234J").t);
 
 
     }
