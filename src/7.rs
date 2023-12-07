@@ -45,12 +45,14 @@ fn classify(cards: &Vec<Card>) -> HandType {
         .filter(|&x| x != Card::Joker)
         .sorted() // A A B C D
         .group_by(|x| x.clone())
-        .into_iter()  // (A, [A A]) (B, [B]) (C, [C]) (D, [D])
+        .into_iter() // (A, [A A]) (B, [B]) (C, [C]) (D, [D])
         .map(|(_, a)| a.count()) // wounder if there's a function combining them
         .sorted()
         .rev() // 2 1 1 1
         .collect();
-    if jokers > 0 {println!("-->{}", jokers);}
+    if jokers > 0 {
+        println!("-->{}", jokers);
+    }
     match (counts.len(), counts.first().unwrap_or(&0) + jokers) {
         // number of unique cards, highest count
         (_, 5) => HandType::FiveofAKind,
@@ -59,7 +61,7 @@ fn classify(cards: &Vec<Card>) -> HandType {
         (3, 2) => HandType::TwoPair,
         (3, 3) => HandType::ThreeOfAKind,
         (4, 2) => HandType::OnePair,
-        (_, _) => HandType::HighCard
+        (_, _) => HandType::HighCard,
     }
 }
 
@@ -94,18 +96,26 @@ fn parse_line(l: &str, j: Card) -> (Hand, usize) {
 }
 
 fn parse(f: &str, j: Card) -> Vec<(Hand, usize)> {
-    read_to_string(f).unwrap().lines().map(|x| parse_line(x, j)).collect()
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(|x| parse_line(x, j))
+        .collect()
 }
 
 fn solve(deck: Vec<(Hand, usize)>) -> usize {
-    deck.into_iter().sorted().rev().enumerate().map(|(i, (_, score))| (i+1)*score).sum()
+    deck.into_iter()
+        .sorted()
+        .rev()
+        .enumerate()
+        .map(|(i, (_, score))| (i + 1) * score)
+        .sum()
 }
 
 fn main() {
     println!("part 1: {:?}", solve(parse("inputs/7b", Card::Jack)));
     println!("part 2: {:?}", solve(parse("inputs/7b", Card::Joker)));
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -138,8 +148,6 @@ mod tests {
         assert_eq!(HandType::ThreeOfAKind, joker("234JJ").t);
 
         assert_eq!(HandType::OnePair, joker("5234J").t);
-
-
     }
     #[test]
     fn part1() {
