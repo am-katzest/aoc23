@@ -31,7 +31,7 @@ enum Card {
     One,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Hand {
     t: HandType,
     cards: Vec<Card>,
@@ -48,7 +48,6 @@ fn classify(cards: &Vec<Card>) -> HandType {
         .sorted()
         .rev() // 2 1 1 1
         .collect();
-    println!("{:?} {:?}", cards, counts);
     match (counts.len(), counts.first().unwrap()) {
         // number of unique cards, highest count
         (1, 5) => HandType::FiveofAKind,
@@ -87,25 +86,23 @@ fn parse_hand(h: &str) -> Hand {
     Hand { cards, t }
 }
 
-fn parse_line(l: &str) -> (Hand, i32) {
+fn parse_line(l: &str) -> (Hand, usize) {
     let (f, s) = l.split(" ").collect_tuple().unwrap();
-    (parse_hand(f), s.parse::<i32>().unwrap())
+    (parse_hand(f), s.parse().unwrap())
 }
 
-fn parse(f: &str) -> Vec<(Hand, i32)> {
+fn parse(f: &str) -> Vec<(Hand, usize)> {
     read_to_string(f).unwrap().lines().map(parse_line).collect()
 }
 
-fn solve(f: &str) -> i64 {
-    for i in parse(f){
-        println!("{:?}", i);
-    }
-    3
+fn solve(f: &str) -> usize {
+    parse(f).into_iter().sorted().rev().enumerate().map(|(i, (_, score))| (i+1)*score).sum()
 }
 
 fn main() {
-    println!("part 1: {:?}", solve("inputs/7a"));
+    println!("part 1: {:?}", solve("inputs/7b"));
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -114,9 +111,20 @@ mod tests {
     #[test]
     fn hand_parsing_test() {
         assert_eq!(HandType::FiveofAKind, parse_hand("33333").t);
+        assert_eq!(HandType::FullHouse, parse_hand("32323").t);
+        assert_eq!(HandType::FourofAKind, parse_hand("44441").t);
+        assert_eq!(HandType::ThreeOfAKind, parse_hand("444AJ").t);
+        assert_eq!(HandType::TwoPair, parse_hand("1313A").t);
+        assert_eq!(HandType::OnePair, parse_hand("11234").t);
+        assert_eq!(HandType::HighCard, parse_hand("12345").t);
         assert_eq!(
             vec![Card::One, Card::Two, Card::Three, Card::Four, Card::Five],
             parse_hand("12345").cards
         );
+    }
+    #[test]
+    fn part1() {
+        assert_eq!(6440, solve("inputs/7a"));
+        assert_eq!(246409899, solve("inputs/7b"));
     }
 }
