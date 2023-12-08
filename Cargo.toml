@@ -1,13 +1,14 @@
 [package]
-name = "fuckaround"
+name = "aoc2023"
 version = "0.1.0"
 edition = "2021"
-default-run = "7"
+default-run = "8"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 itertools = "0.10.3"
 rand = "0.8.3"
+substring = "1.4.5"
 
 [[bin]]
 name = "1"
@@ -36,3 +37,7 @@ path = "src/6.rs"
 [[bin]]
 name = "7"
 path = "src/7.rs"
+
+[[bin]]
+name = "8"
+path = "src/8.rs"
