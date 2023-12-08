@@ -61,7 +61,10 @@ fn parse(f: &str) -> (Vec<Dir>, HashMap<Node, (Node, Node)>) {
 }
 
 fn main() {
-    println!("part 1: {:?}", parse("inputs/8a"));
+    let start = encode_node("AAA");
+    let end = encode_node("ZZZ");
+    let (directions, nodes) = parse("inputs/8b");
+    println!("part 1: {:?}", count_steps(directions, nodes, start, end));
     //println!("part 2: {:?}", solve(parse("inputs/7b", Card::Joker)));
 }
 
