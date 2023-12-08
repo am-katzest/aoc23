@@ -16,16 +16,10 @@ fn parse_dir(c: char) -> Dir {
         _ => panic!("wrong direction {c}"),
     }
 }
+type Node = (char, char, char);
 
-//type Node<'a> = &'a str;
-// should fit in u16, cuz log2(26**3)~=14
-type Node = u32;
-
-fn encode_node(x: &str) -> Node {
-    x.as_bytes().into_iter().for_each(|x| println!("{x}"));
-    x.as_bytes()
-        .into_iter()
-        .fold(0, |acc, &x| (acc << 8) | (x as u32))
+fn encode_node(x:&str) -> Node {
+    x.chars().collect_tuple().unwrap()
 }
 
 fn parse_line(l: &str) -> (Node, (Node, Node)) {
@@ -40,13 +34,33 @@ fn follow (direction: Dir, (left, right): (Node, Node)) -> Node {
     }
 }
 
-fn count_steps(directions: Vec<Dir>, nodes: HashMap<Node, (Node, Node)>, start: Node, end: Node) -> i64{
+fn count_steps((directions, nodes): (Vec<Dir>, HashMap<Node, (Node, Node)>), start: Node, end: Node) -> i64{
     let mut current = start;
     let mut steps = 0;
     for dir in directions.into_iter().cycle() {
         steps += 1;
         current = follow(dir, *nodes.get(&current).unwrap());
         if current == end {break}
+    }
+    return steps;
+}
+fn ending_node(n: &Node) -> bool {
+    n.2 == 'Z'
+}
+fn start_node(n: &Node) -> bool {
+    n.2 == 'A'
+}
+
+fn part2((directions, nodes): (Vec<Dir>, HashMap<Node, (Node, Node)>)) -> i64{
+    let mut currents: Vec<Node> = nodes.keys().copied().filter(start_node).collect();
+    let mut steps = 0;
+    for dir in directions.into_iter().cycle() {
+        steps += 1;
+        for c in currents.iter_mut() {
+            *c = follow(dir, *nodes.get(c).unwrap());
+        }
+        //println!("state: {:?}", currents);
+        if currents.iter().all(ending_node) {break}
     }
     return steps;
 }
@@ -63,9 +77,8 @@ fn parse(f: &str) -> (Vec<Dir>, HashMap<Node, (Node, Node)>) {
 fn main() {
     let start = encode_node("AAA");
     let end = encode_node("ZZZ");
-    let (directions, nodes) = parse("inputs/8b");
-    println!("part 1: {:?}", count_steps(directions, nodes, start, end));
-    //println!("part 2: {:?}", solve(parse("inputs/7b", Card::Joker)));
+    //println!("part 1: {:?}", count_steps(parse("inputs/8c"), start, end));
+    println!("part 2: {:?}", part2(parse("inputs/8b")));
 }
 
 #[cfg(test)]
