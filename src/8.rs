@@ -33,6 +33,24 @@ fn parse_line(l: &str) -> (Node, (Node, Node)) {
     (get(0), (get(7), get(12)))
 }
 
+fn follow (direction: Dir, (left, right): (Node, Node)) -> Node {
+    match direction {
+        Dir::Left => left,
+        Dir::Right => right
+    }
+}
+
+fn count_steps(directions: Vec<Dir>, nodes: HashMap<Node, (Node, Node)>, start: Node, end: Node) -> i64{
+    let mut current = start;
+    let mut steps = 0;
+    for dir in directions.into_iter().cycle() {
+        steps += 1;
+        current = follow(dir, *nodes.get(&current).unwrap());
+        if current == end {break}
+    }
+    return steps;
+}
+
 fn parse(f: &str) -> (Vec<Dir>, HashMap<Node, (Node, Node)>) {
     let file_content = read_to_string(f).unwrap();
     let (dirs, nodes) = file_content.split("\n\n").collect_tuple().unwrap();
