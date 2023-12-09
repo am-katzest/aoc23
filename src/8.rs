@@ -34,27 +34,24 @@ fn follow(direction: Dir, (left, right): (Node, Node)) -> Node {
     }
 }
 
-fn walking<'a>(
-    start: Node,
+#[derive(Clone)]
+struct Data {
     nodes: HashMap<Node, (Node, Node)>,
     directions: Vec<Dir>,
-) -> impl Iterator<Item = Node> + 'a {
-    directions.into_iter().cycle().scan(start, move |x, dir| {
-        *x = follow(dir, *nodes.get(x)?);
-        Some(*x)
-    })
 }
 
-fn count_steps(
-    (directions, nodes): (Vec<Dir>, HashMap<Node, (Node, Node)>),
-    start: Node,
-    end: Node,
-) -> usize {
-    walking(start, nodes, directions)
-        .find_position(|&x| x == end)
-        .unwrap()
-        .0
-        + 1
+fn walking<'a>(start: Node, data: Data) -> impl Iterator<Item = Node> + 'a {
+    data.directions
+        .into_iter()
+        .cycle()
+        .scan(start, move |x, dir| {
+            *x = follow(dir, *data.nodes.get(x)?);
+            Some(*x)
+        })
+}
+
+fn count_steps(data: Data, start: Node, end: Node) -> usize {
+    walking(start, data).find_position(|&x| x == end).unwrap().0 + 1
 }
 
 fn ending_node(n: Node) -> bool {
@@ -64,17 +61,13 @@ fn start_node(n: &Node) -> bool {
     n.2 == 'A'
 }
 
-fn count_period(
-    start: Node,
-    nodes: HashMap<Node, (Node, Node)>,
-    directions: Vec<Dir>,
-) -> (usize, usize) {
+fn count_period(start: Node, data: Data) -> (usize, usize) {
     // returns the start, and period of the first found cycle
     let mut visited: HashMap<(usize, Node), usize> = HashMap::new();
     // node -> absolutei
     //
-    let len = directions.len();
-    for (current, node) in walking(start, nodes, directions).enumerate() {
+    let len = data.directions.len();
+    for (current, node) in walking(start, data).enumerate() {
         let local = current % len;
         if ending_node(node) {
             // every time we roll over the directions,
@@ -90,23 +83,23 @@ fn count_period(
     (0, 0)
 }
 
-fn part2((directions, nodes): (Vec<Dir>, HashMap<Node, (Node, Node)>)) -> i64 {
-    let keys: Vec<_> = nodes.keys().copied().filter(start_node).collect();
+fn part2(data: Data) -> i64 {
+    let keys: Vec<_> = data.nodes.keys().copied().filter(start_node).collect();
     let _x = keys
         .into_iter()
-        .map(move |start| count_period(start, nodes.to_owned(), directions.to_owned()))
+        .map(move |start| count_period(start, data.to_owned()))
         .inspect(|x| println!("{:?}", x))
         .collect_vec();
     return 3;
 }
 
-fn parse(f: &str) -> (Vec<Dir>, HashMap<Node, (Node, Node)>) {
+fn parse(f: &str) -> Data {
     let file_content = read_to_string(f).unwrap();
     let (dirs, nodes) = file_content.split("\n\n").collect_tuple().unwrap();
-    (
-        dirs.chars().map(parse_dir).collect(),
-        nodes.lines().map(parse_line).collect(),
-    )
+
+    let directions = dirs.chars().map(parse_dir).collect();
+    let nodes = nodes.lines().map(parse_line).collect();
+    Data { nodes, directions }
 }
 
 fn main() {
