@@ -9,6 +9,7 @@ default-run = "8"
 itertools = "0.10.3"
 rand = "0.8.3"
 substring = "1.4.5"
+num-integer = "0.1.44"
 
 [[bin]]
 name = "1"
