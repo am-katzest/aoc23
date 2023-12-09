@@ -40,27 +40,18 @@ fn backwards(x: Vec<i64>) -> i64 {
         .unwrap()
 }
 
-fn part1(f: &str) -> i64 {
+fn solve(f: &str, direction: fn(Vec<i64>) -> i64) -> i64 {
     read_to_string(f)
         .unwrap()
         .lines()
         .map(parse_line)
-        .map(forwards)
-        .sum()
-}
-
-fn part2(f: &str) -> i64 {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(parse_line)
-        .map(backwards)
+        .map(direction)
         .sum()
 }
 
 fn main() {
-    println!("part 1: {:?}", part1("inputs/9b"));
-    println!("part 1: {:?}", part2("inputs/9a"));
+    println!("part 1: {:?}", solve("inputs/9b", forwards));
+    println!("part 1: {:?}", solve("inputs/9a", backwards));
 }
 
 #[cfg(test)]
@@ -92,13 +83,13 @@ mod tests {
     }
     #[test]
     fn tpart1() {
-        assert_eq!(114, part1("inputs/9a"));
-        assert_eq!(1684566095, part1("inputs/9b"));
+        assert_eq!(114, solve("inputs/9a", forwards));
+        assert_eq!(1684566095, solve("inputs/9b", forwards));
     }
 
     #[test]
     fn tpart2() {
-        assert_eq!(2, part2("inputs/9a"));
-        assert_eq!(1136, part2("inputs/9b"));
+        assert_eq!(2, solve("inputs/9a", backwards));
+        assert_eq!(1136, solve("inputs/9b", backwards));
     }
 }
