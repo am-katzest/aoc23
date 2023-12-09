@@ -33,9 +33,9 @@ fn forwards(x: Vec<i64>) -> i64 {
 fn backwards(x: Vec<i64>) -> i64 {
     make_diffs(x)
         .map(|x| *x.first().unwrap_or(&0))
-        .collect_vec()
-        .into_iter()
-        .rev()
+        .collect_vec() // i love
+        .into_iter()   //  rust
+        .rev()         // so much
         .reduce(|dx, x| x - dx)
         .unwrap()
 }
