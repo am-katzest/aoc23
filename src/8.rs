@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs::read_to_string};
 
-use num_integer::Integer;
 use itertools::Itertools;
+use num_integer::Integer;
 use substring::Substring;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -142,9 +142,21 @@ mod tests {
     }
     #[test]
     fn merging_test() {
-        let a = Cycle {start:0, period:6};
-        let b = Cycle {start:0, period:4};
-        assert_eq!(Some(Cycle{start: 0, period: 12}) ,merge_cycles(a, b));
+        let a = Cycle {
+            start: 0,
+            period: 6,
+        };
+        let b = Cycle {
+            start: 0,
+            period: 4,
+        };
+        assert_eq!(
+            Some(Cycle {
+                start: 0,
+                period: 12
+            }),
+            merge_cycles(a, b)
+        );
         //        let a = Cycle {start:1, period:6};
         //        let b = Cycle {start:1, period:4};
         //assert_eq!(Some(Cycle{start: 1, period: 12}) ,merge_cycles(a, b));
