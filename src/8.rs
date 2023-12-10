@@ -71,9 +71,15 @@ struct Cycle {
 fn merge_cycles(x: Cycle, y: Cycle) -> Option<Cycle> {
     let period = x.period.lcm(&y.period);
     if x.start == y.start {
-        Some(Cycle {period, start: x.start,})
+        Some(Cycle {
+            period,
+            start: x.start,
+        })
     } else if x.period - x.start == y.period - y.start {
-        Some(Cycle {period, start: period - (x.period - x.start)})
+        Some(Cycle {
+            period,
+            start: period - (x.period - x.start),
+        })
     } else {
         None
     }
@@ -120,15 +126,20 @@ fn count_period(start: Node, data: Data) -> Vec<Cycle> {
         })
         .collect()
 }
-
-fn part2(data: Data) -> i64 {
+fn part2(data: Data) -> isize {
     let keys: Vec<_> = data.nodes.keys().copied().filter(start_node).collect();
-    keys
-        .into_iter()
+    keys.into_iter()
         .map(move |start| count_period(start, data.to_owned()))
         .multi_cartesian_product()
-        .map(|sequence| sequence.into_iter().try_reduce(merge_cycles));
-        //.map(|sequence| sequence.into_iter().reduce(count_period))
+        .filter_map(|sequence| {
+            // sequence.into_iter()try_reduce(merge_cycles).map(|x| x.start)
+            let mut i = sequence.into_iter();
+            let first = i.next().unwrap();
+            i.try_fold(first, merge_cycles).map(|x| x.start)
+        })
+        .min()
+        .unwrap()
+        + 1
 }
 
 fn parse(f: &str) -> Data {
@@ -162,18 +173,51 @@ mod tests {
     }
     #[test]
     fn merging_test() {
-        let a = Cycle {start: 0, period: 6,};
-        let b = Cycle {start: 0, period: 4,};
+        let a = Cycle {
+            start: 0,
+            period: 6,
+        };
+        let b = Cycle {
+            start: 0,
+            period: 4,
+        };
         assert_eq!(
-            Some(Cycle {start: 0, period: 12}),
+            Some(Cycle {
+                start: 0,
+                period: 12
+            }),
             merge_cycles(a, b)
         );
-        let a = Cycle {start:5, period:6};
-        let b = Cycle {start:3, period:4};
-        assert_eq!(Some(Cycle{start: 11, period: 12}) ,merge_cycles(a, b));
+        let a = Cycle {
+            start: 5,
+            period: 6,
+        };
+        let b = Cycle {
+            start: 3,
+            period: 4,
+        };
+        assert_eq!(
+            Some(Cycle {
+                start: 11,
+                period: 12
+            }),
+            merge_cycles(a, b)
+        );
 
-        let a = Cycle {start:12, period:13};
-        let b = Cycle {start:16, period:17};
-        assert_eq!(Some(Cycle{start: 220, period: 221}) ,merge_cycles(a, b));
+        let a = Cycle {
+            start: 12,
+            period: 13,
+        };
+        let b = Cycle {
+            start: 16,
+            period: 17,
+        };
+        assert_eq!(
+            Some(Cycle {
+                start: 220,
+                period: 221
+            }),
+            merge_cycles(a, b)
+        );
     }
 }
