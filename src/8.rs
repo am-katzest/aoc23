@@ -145,7 +145,7 @@ fn parse(f: &str) -> Data {
     Data { nodes, directions }
 }
 
-fn part1(data:Data) -> usize {
+fn part1(data: Data) -> usize {
     let start = encode_node("AAA");
     let end = encode_node("ZZZ");
     count_steps(data, start, end)

@@ -19,7 +19,7 @@ enum Dir {
 
 static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
 
-type Coord = (usize, usize);
+type Coord = (isize, isize);
 
 fn opposite(x: Dir) -> Dir {
     match x {
@@ -71,14 +71,17 @@ fn walk(d: Dir, (x, y): Coord) -> Coord {
 struct Map {
     start: Coord,
     tiles: Vec<Vec<Tile>>,
-    size_x: usize,
-    size_y: usize,
+    size_x: isize,
+    size_y: isize,
 }
 
 impl Index<Coord> for Map {
     type Output = Tile;
     fn index(&self, (x, y): Coord) -> &Tile {
-        &self.tiles[y][x]
+        if x < 0 || x >= self.size_x || y < 0 || y >= self.size_y {
+            return &Tile::Ground; // i like to pretend stuff is infinite
+        }
+        &self.tiles[y as usize][x as usize]
     }
 }
 
@@ -106,13 +109,13 @@ fn parse(f: &str) -> Map {
     'outer: for (y, l) in tiles.iter().enumerate() {
         for (x, t) in l.iter().enumerate() {
             if is_start(*t) {
-                start = (x, y);
+                start = (x as isize, y as isize);
                 break 'outer;
             }
         }
     }
-    let size_y = tiles.len();
-    let size_x = tiles[0].len();
+    let size_y = tiles.len() as isize;
+    let size_x = tiles[0].len() as isize;
     Map {
         tiles,
         start,
@@ -121,12 +124,16 @@ fn parse(f: &str) -> Map {
     }
 }
 
-fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<usize> {
+fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<isize> {
     let mut duration = 0;
     let mut current = start;
     let mut dir = dir;
     loop {
+        println!("{:?} {:?} {:?}", current, dir, has_direction(m[current], dir));
         let current_tile = m[current];
+        if !has_direction(current_tile, dir) {
+            return None;
+        }
         let target = walk(dir, current);
         let target_tile = m[target]; // i wonder if it'll get reused
         if !can_move(current_tile, target_tile, dir) {
@@ -134,7 +141,7 @@ fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<usize> {
         }
         current = target;
         duration += 1;
-        dir = match other(target_tile, dir) {
+        dir = match other(target_tile, opposite(dir)) {
             Some(x) => x,
             None => break,
         };
@@ -147,6 +154,7 @@ fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<usize> {
 }
 
 fn part1(m: Map) -> i32 {
+    println!("{:?}", m);
     for d in DIRECTIONS {
         println!("{:?}", measure_loop(m.start.to_owned(), *d, m.to_owned()));
     }
