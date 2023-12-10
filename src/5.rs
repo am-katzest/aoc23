@@ -25,7 +25,6 @@ enum Res {
     Unmapped(Range),
 }
 
-#[rustfmt::skip]
 fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
     // maps what it can, returns up to three MappingResults
     let rs = r.start;
@@ -34,37 +33,50 @@ fn try_translate_range(r: Range, m: MapLine) -> Vec<Res> {
     let me = m.src + m.len;
     let transform = m.dest - m.src;
     let dist = ms - rs;
-    let mapped = |start, len| Res::Mapped(Range {start, len});
-    let unmapped = |start, len| Res::Unmapped(Range {start, len});
+    let mapped = |start, len| Res::Mapped(Range { start, len });
+    let unmapped = |start, len| Res::Unmapped(Range { start, len });
     // could possibly be done by always creating three ranges, then filtering i think
-    if rs >= me || ms >= re {// range entirely outside map
+    if rs >= me || ms >= re {
+        // range entirely outside map
         vec![unmapped(rs, r.len)]
-    } else if re <= me && rs >= ms {// range entirely fits in map
+    } else if re <= me && rs >= ms {
+        // range entirely fits in map
         vec![mapped(rs + transform, r.len)]
-    } else if rs < ms && re > me {// range exceeds mapping on both ends
-        vec! [unmapped(rs, dist),
-              mapped(m.dest, m.len),
-              unmapped(me, r.len - dist - m.len)]
-    } else if re <= me {// range exceeds mapping on the left
+    } else if rs < ms && re > me {
+        // range exceeds mapping on both ends
+        vec![unmapped(rs, dist), mapped(m.dest, m.len), unmapped(me, r.len - dist - m.len)]
+    } else if re <= me {
+        // range exceeds mapping on the left
         vec![unmapped(rs, dist), mapped(m.dest, r.len - dist)]
-    } else {// range exceeds mapping on the right
+    } else {
+        // range exceeds mapping on the right
         vec![mapped(rs + transform, me - rs), unmapped(me, r.len - me + rs)]
     }
 }
 
-#[rustfmt::skip]
-fn translate_ranges(rs:Vec<Range>, ms:Vec<MapLine>) -> Vec<Range> {
+fn translate_ranges(rs: Vec<Range>, ms: Vec<MapLine>) -> Vec<Range> {
     // applies for every range, applies try_translate_range in all possible ways
-    let mut result:Vec<Range> = vec![];
-    ms.iter()
-      .copied()
-      .fold(rs, |i:Vec<Range>, m:MapLine| {
-        i.into_iter().map(|x| try_translate_range(x, m).into_iter().filter_map(|x| match x {
-            Res::Mapped(x) => {result.push(x); None},
-            Res::Unmapped(x) => Some(x)
-        }).collect()).concat()
-    })
-      .into_iter().for_each(|x| result.push(x));
+    let mut result: Vec<Range> = vec![];
+    ms.iter() // for each mapline
+        .copied()
+        .fold(rs, |i: Vec<Range>, m: MapLine| {
+            i.into_iter() // we try to translate what we can
+                .map(|x| {
+                    try_translate_range(x, m)
+                        .into_iter()
+                        .filter_map(|x| match x {
+                            Res::Mapped(x) => {
+                                result.push(x); // successful translations go to result
+                                None
+                            }
+                            Res::Unmapped(x) => Some(x), // rest are tried again in the subsequent line
+                        })
+                        .collect()
+                })
+                .concat()
+        })
+        .into_iter() // ranges matching no lines are appended to result
+        .for_each(|x| result.push(x));
     result
 }
 
