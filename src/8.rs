@@ -64,51 +64,71 @@ fn start_node(n: &Node) -> bool {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Cycle {
-    start: usize,
-    period: usize,
+    start: isize,
+    period: isize,
 }
 
 fn merge_cycles(x: Cycle, y: Cycle) -> Option<Cycle> {
     let period = x.period.lcm(&y.period);
-    let start = 0; // wrong
-    Some(Cycle { period, start })
+    if x.start == y.start {
+        Some(Cycle {period, start: x.start,})
+    } else if x.period - x.start == y.period - y.start {
+        Some(Cycle {period, start: period - (x.period - x.start)})
+    } else {
+        None
+    }
 }
 
-fn count_period(start: Node, data: Data) -> Cycle {
-    // returns the start, and period of the first found cycle
-    let mut visited: HashMap<(usize, Node), usize> = HashMap::new();
-    // (ic, node) -> absolutei
+fn count_period(start: Node, data: Data) -> Vec<Cycle> {
+    // returns the start, and period of all found cycles
+    #[derive(Debug)]
+    enum Visited {
+        Once(usize),
+        Twice((usize, usize)),
+    }
+    let mut visited: HashMap<(usize, Node), Visited> = HashMap::new();
+    // (ic, node) -> Visited
     let len = data.directions.len();
     for (current, node) in walking(start, data).enumerate() {
         let local = current % len;
         if ending_node(node) {
             // every time we roll over the directions,
-            // check if we visited that node before
-            match visited.get(&(local, node)) {
+            // check if we visited that node before this instruction
+            // i assume that once i'll visit one zs thrice it means all other zs are visited twice
+            let k = (local, node);
+            match visited.get(&k) {
                 None => {
-                    visited.insert((local, node), current);
+                    visited.insert(k, Visited::Once(current));
                 }
-                Some(previous) => {
-                    return Cycle {
-                        start: *previous,
-                        period: current - previous,
-                    }
+                Some(Visited::Once(previous)) => {
+                    visited.insert(k, Visited::Twice((*previous, current)));
                 }
+                Some(Visited::Twice(_)) if current > 500000 => break,
+                _ => (),
             }
         }
     }
-    // loop could get over more than one node, TODO -- fix it to output vector of periods
-    panic!()
+
+    visited
+        .values()
+        .map(|x| match x {
+            Visited::Twice((a, b)) => Cycle {
+                start: *a as isize,
+                period: (b - a) as isize,
+            },
+            x => panic!("unexpected {:?}", x),
+        })
+        .collect()
 }
 
 fn part2(data: Data) -> i64 {
     let keys: Vec<_> = data.nodes.keys().copied().filter(start_node).collect();
-    let _x = keys
+    keys
         .into_iter()
         .map(move |start| count_period(start, data.to_owned()))
-        .inspect(|x| println!("{:?}", x))
-        .collect_vec();
-    return 3;
+        .multi_cartesian_product()
+        .map(|sequence| sequence.into_iter().try_reduce(merge_cycles));
+        //.map(|sequence| sequence.into_iter().reduce(count_period))
 }
 
 fn parse(f: &str) -> Data {
@@ -125,7 +145,7 @@ fn main() {
     //let end = encode_node("ZZZ");
     //println!("part 1: {:?}", count_steps(parse("inputs/8b"), start, end));
     //println!("part 1: {:?}", count_steps(parse("inputs/8b"), start, end));
-    println!("part 2: {:?}", part2(parse("inputs/8c")));
+    println!("part 2: {:?}", part2(parse("inputs/8b")));
 }
 
 #[cfg(test)]
@@ -142,23 +162,18 @@ mod tests {
     }
     #[test]
     fn merging_test() {
-        let a = Cycle {
-            start: 0,
-            period: 6,
-        };
-        let b = Cycle {
-            start: 0,
-            period: 4,
-        };
+        let a = Cycle {start: 0, period: 6,};
+        let b = Cycle {start: 0, period: 4,};
         assert_eq!(
-            Some(Cycle {
-                start: 0,
-                period: 12
-            }),
+            Some(Cycle {start: 0, period: 12}),
             merge_cycles(a, b)
         );
-        //        let a = Cycle {start:1, period:6};
-        //        let b = Cycle {start:1, period:4};
-        //assert_eq!(Some(Cycle{start: 1, period: 12}) ,merge_cycles(a, b));
+        let a = Cycle {start:5, period:6};
+        let b = Cycle {start:3, period:4};
+        assert_eq!(Some(Cycle{start: 11, period: 12}) ,merge_cycles(a, b));
+
+        let a = Cycle {start:12, period:13};
+        let b = Cycle {start:16, period:17};
+        assert_eq!(Some(Cycle{start: 220, period: 221}) ,merge_cycles(a, b));
     }
 }
