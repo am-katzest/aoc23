@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use std::fs::read_to_string;
+use std::iter;
 use std::ops::Index;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -27,6 +28,15 @@ fn opposite(x: Dir) -> Dir {
         Dir::Right => Dir::Left,
         Dir::Down => Dir::Up,
         Dir::Up => Dir::Down,
+    }
+}
+
+fn clockwise(x: Dir) -> Dir {
+    match x {
+        Dir::Left => Dir::Up,
+        Dir::Right => Dir::Down,
+        Dir::Down => Dir::Left,
+        Dir::Up => Dir::Right,
     }
 }
 
@@ -124,49 +134,44 @@ fn parse(f: &str) -> Map {
     }
 }
 
-fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<isize> {
-    let mut duration = 0;
-    let mut current = start;
-    let mut dir = dir;
-    loop {
-        println!("{:?} {:?} {:?}", current, dir, has_direction(m[current], dir));
-        let current_tile = m[current];
-        if !has_direction(current_tile, dir) {
-            return None;
-        }
-        let target = walk(dir, current);
-        let target_tile = m[target]; // i wonder if it'll get reused
-        if !can_move(current_tile, target_tile, dir) {
-            return None;
-        }
-        current = target;
-        duration += 1;
-        dir = match other(target_tile, opposite(dir)) {
-            Some(x) => x,
-            None => break,
-        };
-        // shouldn't be needed
-        if current == start {
-            break;
-        }
-    }
-    Some(duration)
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Walker {
+    dir: Dir,
+    coord:  Coord
 }
 
-fn part1(m: Map) -> isize {
-    DIRECTIONS
-        .iter()
-        .find_map(|d| measure_loop(m.start.to_owned(), *d, m.to_owned()))
-        .unwrap()
-        / 2
+fn proceed(m :Map, w: Walker)  -> Option<Walker> {
+    let target = walk(w.dir, w.coord);
+    if target == m.start {
+        None
+    } else {
+        Some(Walker {coord:target, dir: other(m[target], opposite(w.dir)).unwrap()})
+    }
+}
+
+fn create_loop(m: Map, d: Dir) -> impl Iterator<Item = Walker> {
+    let starting = Walker {coord: m.start, dir: d};
+    iter::successors(Some(starting), move |x| {
+        proceed(m.to_owned(), x.to_owned())
+    })
+}
+
+fn part1(m: Map, d : Dir) -> usize {
+    create_loop(m, d).count() / 2
 }
 
 fn main() {
-    println!("part 1: {:?}", part1(parse("inputs/10a")));
-    println!("part 1: {:?}", part1(parse("inputs/10b")));
+    println!("part 1: {:?}", part1(parse("inputs/10a"), Dir::Down));
+    println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
 }
 
 #[cfg(test)]
 mod tests {
     use crate::*;
+    #[test]
+    fn part1_test() {
+        assert_eq!(8, part1(parse("inputs/10a"), Dir::Down));
+        assert_eq!(6927, part1(parse("inputs/10b"), Dir::Up));
+    }
 }
