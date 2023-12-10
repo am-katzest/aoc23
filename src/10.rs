@@ -18,7 +18,7 @@ enum Dir {
     Up,
 }
 
-type Coord = (isize, isize);
+type Coord = (usize, usize);
 
 fn opposite(x: Dir) -> Dir {
     match x {
@@ -67,17 +67,12 @@ fn walk(d: Dir, (x, y): Coord) -> Coord {
 struct Map {
     start: Coord,
     tiles: Vec<Vec<Tile>>,
-    size_x: isize,
-    size_y: isize,
 }
 
 impl Index<Coord> for Map {
     type Output = Tile;
     fn index(&self, (x, y): Coord) -> &Tile {
-        if x < 0 || x >= self.size_x || y < 0 || y >= self.size_y {
-            return &Tile::Ground; // i like to pretend stuff is infinite
-        }
-        &self.tiles[y as usize][x as usize]
+        &self.tiles[y][x]
     }
 }
 
@@ -105,18 +100,14 @@ fn parse(f: &str) -> Map {
     'outer: for (y, l) in tiles.iter().enumerate() {
         for (x, t) in l.iter().enumerate() {
             if is_start(*t) {
-                start = (x as isize, y as isize);
+                start = (x, y);
                 break 'outer;
             }
         }
     }
-    let size_y = tiles.len() as isize;
-    let size_x = tiles[0].len() as isize;
     Map {
         tiles,
         start,
-        size_x,
-        size_y,
     }
 }
 
