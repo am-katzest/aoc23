@@ -10,20 +10,13 @@ struct Line {
 }
 
 fn parse_subline(l: &str) -> Vec<usize> {
-    l.split_whitespace()
-        .filter_map(|x| x.parse::<usize>().ok())
-        .collect()
+    l.split_whitespace().filter_map(|x| x.parse::<usize>().ok()).collect()
 }
 
 fn parse_line(l: &str) -> Line {
     let (head, rest) = l.split(':').collect_tuple().unwrap();
     let (left, right) = rest.split('|').map(parse_subline).collect_tuple().unwrap();
-    let id = head
-        .split_whitespace()
-        .last()
-        .unwrap()
-        .parse::<usize>()
-        .unwrap();
+    let id = head.split_whitespace().last().unwrap().parse::<usize>().unwrap();
     Line { id, left, right }
 }
 
@@ -32,12 +25,7 @@ fn calc_line_matches(l: Line) -> usize {
 }
 
 fn line_scores(f: &str) -> Vec<usize> {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(parse_line)
-        .map(calc_line_matches)
-        .collect()
+    read_to_string(f).unwrap().lines().map(parse_line).map(calc_line_matches).collect()
 }
 
 fn calc_line_points(i: usize) -> usize {

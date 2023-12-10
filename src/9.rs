@@ -3,17 +3,12 @@ use std::fs::read_to_string;
 use itertools::Itertools;
 use std::iter;
 fn parse_line(l: &str) -> Vec<i64> {
-    l.split_whitespace()
-        .filter_map(|x| x.parse::<i64>().ok())
-        .collect()
+    l.split_whitespace().filter_map(|x| x.parse::<i64>().ok()).collect()
 }
 
 fn diff(x: Vec<i64>) -> Vec<i64> {
     // woo, we're doing diffrentiation
-    x.into_iter()
-        .tuple_windows()
-        .map(|(a0, a1)| a1 - a0)
-        .collect()
+    x.into_iter().tuple_windows().map(|(a0, a1)| a1 - a0).collect()
 }
 
 fn make_diffs(x: Vec<i64>) -> impl Iterator<Item = Vec<i64>> {
@@ -41,12 +36,7 @@ fn backwards(x: Vec<i64>) -> i64 {
 }
 
 fn solve(f: &str, direction: fn(Vec<i64>) -> i64) -> i64 {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(parse_line)
-        .map(direction)
-        .sum()
+    read_to_string(f).unwrap().lines().map(parse_line).map(direction).sum()
 }
 
 fn main() {

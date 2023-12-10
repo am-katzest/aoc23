@@ -1,0 +1,2 @@
+# Ensure structs are kept in a single line
+max_width = 150

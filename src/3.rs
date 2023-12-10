@@ -20,11 +20,7 @@ fn solve(f: &str, part2: bool) -> i32 {
         (-1, 0),
         (-1, 1),
     ];
-    let lines: Vec<Vec<char>> = read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(|x| x.chars().collect_vec())
-        .collect_vec();
+    let lines: Vec<Vec<char>> = read_to_string(f).unwrap().lines().map(|x| x.chars().collect_vec()).collect_vec();
     let sizey: i32 = lines.len().try_into().unwrap();
     let sizex: i32 = lines.first().unwrap().len().try_into().unwrap();
     let mut acc = 0;
@@ -50,12 +46,7 @@ fn solve(f: &str, part2: bool) -> i32 {
         a
     };
 
-    let adjectant_to_symbol = |x: i32, y: i32| {
-        neighs
-            .iter()
-            .map(|(xo, yo)| (xo + x, yo + y))
-            .any(|(xi, yi)| is_symbol(get(xi, yi)))
-    };
+    let adjectant_to_symbol = |x: i32, y: i32| neighs.iter().map(|(xo, yo)| (xo + x, yo + y)).any(|(xi, yi)| is_symbol(get(xi, yi)));
 
     let seek_to_start = |(x, y)| {
         if !get(x, y).is_digit(10) {

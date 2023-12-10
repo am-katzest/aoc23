@@ -18,13 +18,7 @@ fn parse2(f: &str) -> (i64, i64) {
     read_to_string(f)
         .unwrap()
         .lines()
-        .map(|l| {
-            l.chars()
-                .filter(|c| c.is_numeric())
-                .collect::<String>()
-                .parse::<i64>()
-                .unwrap()
-        })
+        .map(|l| l.chars().filter(|c| c.is_numeric()).collect::<String>().parse::<i64>().unwrap())
         .collect_tuple()
         .unwrap()
 }
@@ -49,17 +43,11 @@ fn find_bound(start: i64, time: i64, distance: i64, slope: i64) -> i64 {
 }
 
 fn get_range((time, distance): (i64, i64)) -> (i64, i64) {
-    (
-        find_bound(0, time, distance, 1),
-        find_bound(time, time, distance, -1),
-    )
+    (find_bound(0, time, distance, 1), find_bound(time, time, distance, -1))
 }
 
 fn solve(f: &str) -> i64 {
-    parse(f)
-        .map(get_range)
-        .map(|(x, y)| y - x + 1)
-        .fold(1, |x, y| x * y)
+    parse(f).map(get_range).map(|(x, y)| y - x + 1).fold(1, |x, y| x * y)
 }
 
 fn solve2(f: &str) -> i64 {

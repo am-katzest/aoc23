@@ -96,20 +96,11 @@ fn parse_line(l: &str, j: Card) -> (Hand, usize) {
 }
 
 fn parse(f: &str, j: Card) -> Vec<(Hand, usize)> {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(|x| parse_line(x, j))
-        .collect()
+    read_to_string(f).unwrap().lines().map(|x| parse_line(x, j)).collect()
 }
 
 fn solve(deck: Vec<(Hand, usize)>) -> usize {
-    deck.into_iter()
-        .sorted()
-        .rev()
-        .enumerate()
-        .map(|(i, (_, score))| (i + 1) * score)
-        .sum()
+    deck.into_iter().sorted().rev().enumerate().map(|(i, (_, score))| (i + 1) * score).sum()
 }
 
 fn main() {

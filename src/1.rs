@@ -65,9 +65,7 @@ fn index(end: End, string: &str, matcher: (i32, &str)) -> Option<(i32, usize)> {
     let (c, sub) = matcher;
     match end {
         End::Left => string.find(sub).map(|position| (c, position)),
-        End::Right => string
-            .rfind(sub)
-            .map(|position| (c, string.len() - sub.len() - position)),
+        End::Right => string.rfind(sub).map(|position| (c, string.len() - sub.len() - position)),
     }
 }
 
@@ -81,10 +79,7 @@ fn select(matchers: &[(i32, &str)], string: &str, end: End) -> i32 {
 }
 
 fn edge_digits(matchers: &[(i32, &str)], x: &str) -> (i32, i32) {
-    (
-        select(matchers, x, End::Left),
-        select(matchers, x, End::Right),
-    )
+    (select(matchers, x, End::Left), select(matchers, x, End::Right))
 }
 
 #[cfg(test)]

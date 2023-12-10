@@ -74,11 +74,7 @@ fn parse_mapping(f: &str) -> MapLine {
 }
 
 fn parse_section(f: &str) -> Vec<MapLine> {
-    f.split("\n")
-        .skip(1)
-        .filter(|x| x.len() > 0)
-        .map(parse_mapping)
-        .collect()
+    f.split("\n").skip(1).filter(|x| x.len() > 0).map(parse_mapping).collect()
 }
 
 fn parse(f: &str) -> (Vec<i64>, Vec<Vec<MapLine>>) {
@@ -106,11 +102,7 @@ fn solve(f: &str) -> i64 {
 }
 fn solve2(f: &str) -> i64 {
     let (s, mappings) = parse(f);
-    let seed_ranges = s
-        .into_iter()
-        .tuples()
-        .map(|(start, len)| Range { start, len })
-        .collect();
+    let seed_ranges = s.into_iter().tuples().map(|(start, len)| Range { start, len }).collect();
     advance_ranges(mappings, seed_ranges)
 }
 
@@ -137,17 +129,8 @@ mod tests {
         );
         // touching
         assert_eq!(
-            vec![Res::Mapped(Range {
-                start: 200,
-                len: 10
-            })],
-            try_translate_range(
-                Range {
-                    start: 100,
-                    len: 10
-                },
-                ml
-            )
+            vec![Res::Mapped(Range { start: 200, len: 10 })],
+            try_translate_range(Range { start: 100, len: 10 }, ml)
         );
         // wholly outside
         assert_eq!(
@@ -171,72 +154,30 @@ mod tests {
         assert_eq!(
             vec![
                 Res::Unmapped(Range { start: 85, len: 15 }),
-                Res::Mapped(Range {
-                    start: 200,
-                    len: 10
-                }),
-                Res::Unmapped(Range {
-                    start: 110,
-                    len: 15
-                })
+                Res::Mapped(Range { start: 200, len: 10 }),
+                Res::Unmapped(Range { start: 110, len: 15 })
             ],
             try_translate_range(Range { start: 85, len: 40 }, ml)
         );
         // exceeding left
         assert_eq!(
-            vec![
-                Res::Unmapped(Range { start: 90, len: 10 }),
-                Res::Mapped(Range { start: 200, len: 5 }),
-            ],
+            vec![Res::Unmapped(Range { start: 90, len: 10 }), Res::Mapped(Range { start: 200, len: 5 }),],
             try_translate_range(Range { start: 90, len: 15 }, ml)
         );
         // touching
         assert_eq!(
-            vec![
-                Res::Unmapped(Range { start: 90, len: 10 }),
-                Res::Mapped(Range {
-                    start: 200,
-                    len: 10
-                }),
-            ],
+            vec![Res::Unmapped(Range { start: 90, len: 10 }), Res::Mapped(Range { start: 200, len: 10 }),],
             try_translate_range(Range { start: 90, len: 20 }, ml)
         );
         // exceeding right
         assert_eq!(
-            vec![
-                Res::Mapped(Range { start: 205, len: 5 }),
-                Res::Unmapped(Range {
-                    start: 110,
-                    len: 30
-                })
-            ],
-            try_translate_range(
-                Range {
-                    start: 105,
-                    len: 35
-                },
-                ml
-            )
+            vec![Res::Mapped(Range { start: 205, len: 5 }), Res::Unmapped(Range { start: 110, len: 30 })],
+            try_translate_range(Range { start: 105, len: 35 }, ml)
         );
         // touching
         assert_eq!(
-            vec![
-                Res::Mapped(Range {
-                    start: 200,
-                    len: 10
-                }),
-                Res::Unmapped(Range {
-                    start: 110,
-                    len: 30
-                })
-            ],
-            try_translate_range(
-                Range {
-                    start: 100,
-                    len: 40
-                },
-                ml
-            )
+            vec![Res::Mapped(Range { start: 200, len: 10 }), Res::Unmapped(Range { start: 110, len: 30 })],
+            try_translate_range(Range { start: 100, len: 40 }, ml)
         );
     }
     #[test]

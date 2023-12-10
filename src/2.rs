@@ -24,14 +24,8 @@ fn add_subsection_(acc: &mut Cubes, new: &str) {
 }
 
 fn parse_section(section: &str) -> Cubes {
-    let mut acc = Cubes {
-        red: 0,
-        green: 0,
-        blue: 0,
-    };
-    section
-        .split(",")
-        .for_each(|x| add_subsection_(&mut acc, x));
+    let mut acc = Cubes { red: 0, green: 0, blue: 0 };
+    section.split(",").for_each(|x| add_subsection_(&mut acc, x));
     acc
 }
 
@@ -85,16 +79,7 @@ fn solve2(f: &str) -> i32 {
         .unwrap()
         .lines()
         .map(parse_line)
-        .map(|(_, xs)| {
-            xs.iter().copied().fold(
-                Cubes {
-                    red: 0,
-                    green: 0,
-                    blue: 0,
-                },
-                |acc, y| maximum(acc, y),
-            )
-        })
+        .map(|(_, xs)| xs.iter().copied().fold(Cubes { red: 0, green: 0, blue: 0 }, |acc, y| maximum(acc, y)))
         .map(power)
         .sum()
 }
@@ -116,52 +101,21 @@ mod tests {
             (
                 1,
                 vec![
-                    Cubes {
-                        red: 4,
-                        green: 0,
-                        blue: 3
-                    },
-                    Cubes {
-                        red: 1,
-                        green: 2,
-                        blue: 6
-                    },
-                    Cubes {
-                        red: 0,
-                        green: 2,
-                        blue: 0
-                    }
+                    Cubes { red: 4, green: 0, blue: 3 },
+                    Cubes { red: 1, green: 2, blue: 6 },
+                    Cubes { red: 0, green: 2, blue: 0 }
                 ]
             ),
             parse_line(line)
         );
-        assert_eq!(
-            Cubes {
-                red: 1,
-                green: 2,
-                blue: 6
-            },
-            parse_section(ss)
-        );
+        assert_eq!(Cubes { red: 1, green: 2, blue: 6 }, parse_section(ss));
         assert_eq!((6, "blue"), parse_subsection(" 6 blue"));
     }
     #[test]
     fn comp_test() {
-        let a = Cubes {
-            red: 0,
-            green: 2,
-            blue: 0,
-        };
-        let b = Cubes {
-            red: 0,
-            green: 3,
-            blue: 0,
-        };
-        let c = Cubes {
-            red: 0,
-            green: 0,
-            blue: 2,
-        };
+        let a = Cubes { red: 0, green: 2, blue: 0 };
+        let b = Cubes { red: 0, green: 3, blue: 0 };
+        let c = Cubes { red: 0, green: 0, blue: 2 };
         assert!(!fits(a, b));
         assert!(fits(b, a));
         assert!(fits(a, a));
