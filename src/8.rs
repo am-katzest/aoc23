@@ -145,11 +145,14 @@ fn parse(f: &str) -> Data {
     Data { nodes, directions }
 }
 
+fn part1(data:Data) -> usize {
+    let start = encode_node("AAA");
+    let end = encode_node("ZZZ");
+    count_steps(data, start, end)
+}
+
 fn main() {
-    //let start = encode_node("AAA");
-    //let end = encode_node("ZZZ");
-    //println!("part 1: {:?}", count_steps(parse("inputs/8b"), start, end));
-    //println!("part 1: {:?}", count_steps(parse("inputs/8b"), start, end));
+    println!("part 1: {:?}", part1(parse("inputs/8b")));
     println!("part 2: {:?}", part2(parse("inputs/8b")));
 }
 
@@ -177,5 +180,15 @@ mod tests {
         let a = Cycle { start: 12, period: 13 };
         let b = Cycle { start: 16, period: 17 };
         assert_eq!(Some(Cycle { start: 220, period: 221 }), merge_cycles(a, b));
+    }
+    #[test]
+    fn part1_test() {
+        assert_eq!(6, part1(parse("inputs/8a")));
+        assert_eq!(18827, part1(parse("inputs/8b")));
+    }
+    #[test]
+    fn part2_test() {
+        assert_eq!(6, part2(parse("inputs/8c")));
+        assert_eq!(20220305520997, part2(parse("inputs/8b")));
     }
 }
