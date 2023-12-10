@@ -18,8 +18,6 @@ enum Dir {
     Up,
 }
 
-static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
-
 type Coord = (isize, isize);
 
 fn opposite(x: Dir) -> Dir {
@@ -48,23 +46,11 @@ fn other(t: Tile, x: Dir) -> Option<Dir> {
     }
 }
 
-fn has_direction(t: Tile, d: Dir) -> bool {
-    match t {
-        Tile::Ground => false,
-        Tile::Starting => true,
-        Tile::Pipe(a, b) => d == a || d == b,
-    }
-}
-
 fn is_start(t: Tile) -> bool {
     match t {
         Tile::Starting => true,
         _ => false,
     }
-}
-
-fn can_move(from: Tile, to: Tile, dir: Dir) -> bool {
-    has_direction(from, dir) && has_direction(to, opposite(dir))
 }
 
 fn walk(d: Dir, (x, y): Coord) -> Coord {
