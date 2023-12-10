@@ -29,6 +29,15 @@ fn opposite(x: Dir) -> Dir {
     }
 }
 
+fn counterclockwise(x: Dir) -> Dir {
+    match x {
+        Dir::Left => Dir::Down,
+        Dir::Right => Dir::Up,
+        Dir::Down => Dir::Right,
+        Dir::Up => Dir::Left,
+    }
+}
+
 fn clockwise(x: Dir) -> Dir {
     match x {
         Dir::Left => Dir::Up,
@@ -53,7 +62,7 @@ fn is_start(t: Tile) -> bool {
     }
 }
 
-fn walk(d: Dir, (x, y): Coord) -> Coord {
+fn step(d: Dir, (x, y): Coord) -> Coord {
     match d {
         Dir::Left => (x - 1, y),
         Dir::Right => (x + 1, y),
@@ -105,42 +114,87 @@ fn parse(f: &str) -> Map {
             }
         }
     }
-    Map {
-        tiles,
-        start,
-    }
+    Map { tiles, start }
 }
-
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Walker {
     dir: Dir,
-    coord:  Coord
+    coord: Coord,
 }
 
-fn proceed(m :Map, w: Walker)  -> Option<Walker> {
-    let target = walk(w.dir, w.coord);
+fn proceed(m: Map, w: Walker) -> Option<Walker> {
+    let target = step(w.dir, w.coord);
     if target == m.start {
         None
     } else {
-        Some(Walker {coord:target, dir: other(m[target], opposite(w.dir)).unwrap()})
+        Some(Walker {
+            coord: target,
+            dir: other(m[target], opposite(w.dir)).unwrap(),
+        })
     }
 }
 
 fn create_loop(m: Map, d: Dir) -> impl Iterator<Item = Walker> {
-    let starting = Walker {coord: m.start, dir: d};
-    iter::successors(Some(starting), move |x| {
-        proceed(m.to_owned(), x.to_owned())
-    })
+    let starting = Walker { coord: m.start, dir: d };
+    iter::successors(Some(starting), move |x| proceed(m.to_owned(), x.to_owned()))
 }
 
-fn part1(m: Map, d : Dir) -> usize {
+fn part1(m: Map, d: Dir) -> usize {
     create_loop(m, d).count() / 2
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Field {
+    Touched,
+    Untouched,
+    Path,
+}
+
+static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
+
+fn fill (f: &mut Vec<Vec<Field>>, c: Coord, ctr: &mut usize) {
+    if f[c.0][c.1] == Field::Untouched {
+        f[c.0][c.1] = Field::Touched;
+        *ctr += 1;
+        for dir in DIRECTIONS {
+            fill(f, step(*dir, c), ctr);
+        }
+    } 
+}
+
+fn print (f: Vec<Vec<Field>>) {
+    for l in f {
+        for i in l {
+            let c = match i {
+                Field::Touched => '█',
+                Field::Path => 'x',
+                Field::Untouched => ' ',
+            };
+            print!("{c}");
+        }
+        println!("");
+    }
+}
+
+fn part2(m: Map, d: Dir, rotate: fn(Dir) -> Dir) -> usize {
+    let mut x = m.tiles.iter().map(|x| x.iter().map(|_| Field::Untouched).collect_vec()).collect_vec();
+    let mut ctr = 0;
+    for i in create_loop(m.to_owned(), d) {
+        x[i.coord.0][i.coord.1] = Field::Path;
+    }
+    for i in create_loop(m, d) {
+        fill(&mut x, step(rotate(i.dir),i.coord), &mut ctr);
+    }
+    print(x);
+    ctr
 }
 
 fn main() {
     println!("part 1: {:?}", part1(parse("inputs/10a"), Dir::Down));
     println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
+    println!("part 2: {:?}", part2(parse("inputs/10a"), Dir::Down, counterclockwise));
+    println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up, counterclockwise));
 }
 
 #[cfg(test)]
