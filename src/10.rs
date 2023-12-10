@@ -153,16 +153,17 @@ fn measure_loop(start: Coord, dir: Dir, m: Map) -> Option<isize> {
     Some(duration)
 }
 
-fn part1(m: Map) -> i32 {
-    println!("{:?}", m);
-    for d in DIRECTIONS {
-        println!("{:?}", measure_loop(m.start.to_owned(), *d, m.to_owned()));
-    }
-    3
+fn part1(m: Map) -> isize {
+    DIRECTIONS
+        .iter()
+        .find_map(|d| measure_loop(m.start.to_owned(), *d, m.to_owned()))
+        .unwrap()
+        / 2
 }
 
 fn main() {
     println!("part 1: {:?}", part1(parse("inputs/10a")));
+    println!("part 1: {:?}", part1(parse("inputs/10b")));
 }
 
 #[cfg(test)]
