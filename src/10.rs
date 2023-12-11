@@ -153,17 +153,16 @@ enum Field {
 
 static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
 
-fn fill (f: &mut Vec<Vec<Field>>, c: Coord, ctr: &mut usize) {
-    if f[c.0][c.1] == Field::Untouched {
-        f[c.0][c.1] = Field::Touched;
-        *ctr += 1;
+fn fill (f: &mut Vec<Vec<Field>>, c: Coord) {
+    if f[c.1][c.0] == Field::Untouched {
+        f[c.1][c.0] = Field::Touched;
         for dir in DIRECTIONS {
-            fill(f, step(*dir, c), ctr);
+            fill(f, step(*dir, c));
         }
     } 
 }
 
-fn print (f: Vec<Vec<Field>>) {
+fn print (f: &Vec<Vec<Field>>) {
     for l in f {
         for i in l {
             let c = match i {
@@ -179,22 +178,24 @@ fn print (f: Vec<Vec<Field>>) {
 
 fn part2(m: Map, d: Dir, rotate: fn(Dir) -> Dir) -> usize {
     let mut x = m.tiles.iter().map(|x| x.iter().map(|_| Field::Untouched).collect_vec()).collect_vec();
-    let mut ctr = 0;
     for i in create_loop(m.to_owned(), d) {
-        x[i.coord.0][i.coord.1] = Field::Path;
+        x[i.coord.1][i.coord.0] = Field::Path;
     }
     for i in create_loop(m, d) {
-        fill(&mut x, step(rotate(i.dir),i.coord), &mut ctr);
+        let c = step(rotate(i.dir),i.coord);
+        fill(&mut x, c);
     }
-    print(x);
-    ctr
+    x.into_iter().flatten().filter(|&x| x == Field::Touched).count()
 }
 
 fn main() {
-    println!("part 1: {:?}", part1(parse("inputs/10a"), Dir::Down));
-    println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
+    //println!("part 1: {:?}", part1(parse("inputs/10a"), Dir::Down));
+    //println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
     println!("part 2: {:?}", part2(parse("inputs/10a"), Dir::Down, counterclockwise));
     println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up, counterclockwise));
+    println!("part 2: {:?}", part2(parse("inputs/10c"), Dir::Down, counterclockwise));
+    println!("part 2: {:?}", part2(parse("inputs/10d"), Dir::Right, counterclockwise));
+    println!("part 2: {:?}", part2(parse("inputs/10e"), Dir::Left, counterclockwise));
 }
 
 #[cfg(test)]
@@ -204,5 +205,14 @@ mod tests {
     fn part1_test() {
         assert_eq!(8, part1(parse("inputs/10a"), Dir::Down));
         assert_eq!(6927, part1(parse("inputs/10b"), Dir::Up));
+    }
+    #[test]
+    fn part2_test(){
+        //assert_eq!(2, part2(parse("inputs/10a"), Dir::Down, counterclockwise));
+    //assert_eq!(, part2(parse("inputs/10b"), Dir::Up, counterclockwise));
+    assert_eq!(4, part2(parse("inputs/10c"), Dir::Down, counterclockwise));
+    assert_eq!(8, part2(parse("inputs/10d"), Dir::Right, counterclockwise));
+    assert_eq!(10, part2(parse("inputs/10e"), Dir::Left, counterclockwise));
+
     }
 }
