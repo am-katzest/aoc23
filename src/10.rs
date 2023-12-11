@@ -20,24 +20,6 @@ enum Dir {
 
 type Coord = (usize, usize);
 
-fn opposite(x: Dir) -> Dir {
-    match x {
-        Dir::Left => Dir::Right,
-        Dir::Right => Dir::Left,
-        Dir::Down => Dir::Up,
-        Dir::Up => Dir::Down,
-    }
-}
-
-fn counterclockwise(x: Dir) -> Dir {
-    match x {
-        Dir::Left => Dir::Down,
-        Dir::Right => Dir::Up,
-        Dir::Down => Dir::Right,
-        Dir::Up => Dir::Left,
-    }
-}
-
 fn clockwise(x: Dir) -> Dir {
     match x {
         Dir::Left => Dir::Up,
@@ -45,6 +27,14 @@ fn clockwise(x: Dir) -> Dir {
         Dir::Down => Dir::Left,
         Dir::Up => Dir::Right,
     }
+}
+
+fn opposite(x: Dir) -> Dir {
+    clockwise(clockwise(x))
+}
+
+fn counterclockwise(x: Dir) -> Dir {
+    clockwise(opposite(x))
 }
 
 fn other(t: Tile, x: Dir) -> Option<Dir> {
@@ -196,7 +186,7 @@ mod tests {
     assert_eq!(4, part2(parse("inputs/10c"), Dir::Down));
     assert_eq!(8, part2(parse("inputs/10d"), Dir::Right));
     assert_eq!(10, part2(parse("inputs/10e"), Dir::Left));
-    assert_ne!(467, part2(parse("inputs/10b"), Dir::Up));
+    assert_eq!(467, part2(parse("inputs/10b"), Dir::Up));
 
     }
 }
