@@ -181,8 +181,12 @@ fn part2(m: Map, d: Dir) -> usize {
     for i in create_loop(m.to_owned(), d) {
         x[i.coord.1][i.coord.0] = Field::Path;
     }
-    for i in create_loop(m, d) {
+    for (i, i1) in create_loop(m, d).collect_vec().iter().circular_tuple_windows() {
         let c = step(counterclockwise(i.dir),i.coord);
+        if clockwise(i.dir) == i1.dir {
+            // we are turning and could miss a block
+            fill(&mut x, step(i.dir, c));
+        }
         fill(&mut x, c);
     }
     print(&x);
@@ -209,11 +213,10 @@ mod tests {
     }
     #[test]
     fn part2_test(){
-        //assert_eq!(2, part2(parse("inputs/10a"), Dir::Down, counterclockwise));
-    //assert_eq!(, part2(parse("inputs/10b"), Dir::Up, counterclockwise));
     assert_eq!(4, part2(parse("inputs/10c"), Dir::Down));
     assert_eq!(8, part2(parse("inputs/10d"), Dir::Right));
     assert_eq!(10, part2(parse("inputs/10e"), Dir::Left));
+    assert_ne!(467, part2(parse("inputs/10b"), Dir::Up));
 
     }
 }
