@@ -103,8 +103,7 @@ fn count_period(start: Node, data: Data) -> Vec<Cycle> {
                 Some(Visited::Once(previous)) => {
                     visited.insert(k, Visited::Twice((*previous, current)));
                 }
-                Some(Visited::Twice(_)) if current > 500000 => break,
-                _ => (),
+                Some(Visited::Twice(_)) => break,
             }
         }
     }

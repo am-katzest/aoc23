@@ -113,7 +113,7 @@ struct Walker {
     coord: Coord,
 }
 
-fn proceed(m: Map, w: Walker) -> Option<Walker> {
+fn proceed(m: &Map, w: Walker) -> Option<Walker> {
     let target = step(w.dir, w.coord);
     if target == m.start {
         None
@@ -127,7 +127,7 @@ fn proceed(m: Map, w: Walker) -> Option<Walker> {
 
 fn create_loop(m: Map, d: Dir) -> impl Iterator<Item = Walker> {
     let starting = Walker { coord: m.start, dir: d };
-    iter::successors(Some(starting), move |x| proceed(m.to_owned(), x.to_owned()))
+    iter::successors(Some(starting), move |x| proceed(&m, *x))
 }
 
 fn part1(m: Map, d: Dir) -> usize {
