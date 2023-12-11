@@ -143,13 +143,13 @@ enum Field {
 
 static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
 
-fn fill (f: &mut Vec<Vec<Field>>, c: Coord) {
+fn fill(f: &mut Vec<Vec<Field>>, c: Coord) {
     if f[c.1][c.0] == Field::Untouched {
         f[c.1][c.0] = Field::Touched;
         for dir in DIRECTIONS {
             fill(f, step(*dir, c));
         }
-    } 
+    }
 }
 
 fn part2(m: Map, d: Dir) -> usize {
@@ -158,7 +158,7 @@ fn part2(m: Map, d: Dir) -> usize {
         x[i.coord.1][i.coord.0] = Field::Path;
     }
     for (i, i1) in create_loop(m, d).collect_vec().iter().circular_tuple_windows() {
-        let c = step(counterclockwise(i.dir),i.coord);
+        let c = step(counterclockwise(i.dir), i.coord);
         if clockwise(i.dir) == i1.dir {
             // we are turning and could miss a block
             fill(&mut x, step(i.dir, c));
@@ -182,11 +182,10 @@ mod tests {
         assert_eq!(6927, part1(parse("inputs/10b"), Dir::Up));
     }
     #[test]
-    fn part2_test(){
-    assert_eq!(4, part2(parse("inputs/10c"), Dir::Down));
-    assert_eq!(8, part2(parse("inputs/10d"), Dir::Right));
-    assert_eq!(10, part2(parse("inputs/10e"), Dir::Left));
-    assert_eq!(467, part2(parse("inputs/10b"), Dir::Up));
-
+    fn part2_test() {
+        assert_eq!(4, part2(parse("inputs/10c"), Dir::Down));
+        assert_eq!(8, part2(parse("inputs/10d"), Dir::Right));
+        assert_eq!(10, part2(parse("inputs/10e"), Dir::Left));
+        assert_eq!(467, part2(parse("inputs/10b"), Dir::Up));
     }
 }
