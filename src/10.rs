@@ -179,13 +179,8 @@ fn part2(m: Map, d: Dir) -> usize {
 }
 
 fn main() {
-    //println!("part 1: {:?}", part1(parse("inputs/10a"), Dir::Down));
-    //println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
-    println!("part 2: {:?}", part2(parse("inputs/10a"), Dir::Down));
+    println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
     println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
-    println!("part 2: {:?}", part2(parse("inputs/10c"), Dir::Down));
-    println!("part 2: {:?}", part2(parse("inputs/10d"), Dir::Right));
-    println!("part 2: {:?}", part2(parse("inputs/10e"), Dir::Left));
 }
 
 #[cfg(test)]
