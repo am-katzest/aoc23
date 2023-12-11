@@ -162,20 +162,6 @@ fn fill (f: &mut Vec<Vec<Field>>, c: Coord) {
     } 
 }
 
-fn print (f: &Vec<Vec<Field>>) {
-    for l in f {
-        for i in l {
-            let c = match i {
-                Field::Touched => "██",
-                Field::Path => "[]",
-                Field::Untouched => "  ",
-            };
-            print!("{c}");
-        }
-        println!("");
-    }
-}
-
 fn part2(m: Map, d: Dir) -> usize {
     let mut x = m.tiles.iter().map(|x| x.iter().map(|_| Field::Untouched).collect_vec()).collect_vec();
     for i in create_loop(m.to_owned(), d) {
@@ -189,7 +175,6 @@ fn part2(m: Map, d: Dir) -> usize {
         }
         fill(&mut x, c);
     }
-    print(&x);
     x.into_iter().flatten().filter(|&x| x == Field::Touched).count()
 }
 
