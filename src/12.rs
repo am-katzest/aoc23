@@ -68,7 +68,7 @@ fn freedom(r: Row) -> usize {
 //     Some(possible)
 // }
 
-fn cut_out_one(r: Row, offset: usize) -> Row {
+fn cut_first(r: Row, offset: usize) -> Row {
     // todo use slices
     let springs = r.springs.into_iter().skip(offset + r.ecc[0] + 1).collect_vec();
     let ecc = r.ecc.into_iter().skip(1).collect_vec();
@@ -98,7 +98,7 @@ fn count_possibilities_brute_force(r: Row) -> usize {
     (0..=freedom(r.clone()))
         .map(|i| {
             if feasible(r.to_owned(), i) {
-                count_possibilities_brute_force(cut_out_one(r.to_owned(), i))
+                count_possibilities_brute_force(cut_first(r.to_owned(), i))
             } else {
                 0
             }
@@ -158,8 +158,8 @@ mod tests {
 
     #[test]
     fn cutting_test() {
-        assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 2,1"), 0));
-        assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 1,1"), 1));
+        assert_eq!(parse_line("??? 1"), cut_first(parse_line("?????? 2,1"), 0));
+        assert_eq!(parse_line("??? 1"), cut_first(parse_line("?????? 1,1"), 1));
     }
 
     #[test]
