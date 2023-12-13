@@ -104,8 +104,11 @@ mod tests {
     }
     #[test]
     fn dumb_solver_test() {
-        let r = parse_line(". 1");
-        assert_eq!(1, count_possibilities_brute_force(r));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("? 1")));
+        assert_eq!(2, count_possibilities_brute_force(parse_line("?? 1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("??? 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("???? 2,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("???? 1,2")));
     }
     #[test]
     fn freedom_test() {
