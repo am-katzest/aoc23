@@ -18,8 +18,8 @@ struct Row {
 fn parse_spring(s: char) -> Spring {
     match s {
         '?' => Spring::Unknown,
-        '.' => Spring::Operational,
-        '#' => Spring::Damaged,
+        '#' => Spring::Operational,
+        '.' => Spring::Damaged,
         _ => panic!("wrong spring {s}"),
     }
 }
@@ -76,7 +76,6 @@ fn cut_out_one(r: Row, offset: usize) -> Row {
 }
 
 fn feasible(r: Row, offset: usize) -> bool {
-    println!("m{:?}", r);
     let size = r.ecc[0];
     for i in 0..offset {
         if r.springs[i] == Spring::Operational {
@@ -88,7 +87,6 @@ fn feasible(r: Row, offset: usize) -> bool {
             return false;
         }
     }
-    println!("meow{:?}", r);
     (r.springs.len() == (offset + size)) || (r.springs[offset + size] != Spring::Operational)
 }
 
@@ -118,7 +116,7 @@ fn part1(f: &str) -> usize {
 }
 
 fn main() {
-    println!("part 1: {}", part1("inputs/1b"));
+    println!("part 1: {}", part1("inputs/12b"));
 }
 
 #[cfg(test)]
@@ -141,13 +139,13 @@ mod tests {
         assert_eq!(1, count_possibilities_brute_force(parse_line("??? 1,1")));
         assert_eq!(1, count_possibilities_brute_force(parse_line("???? 2,1")));
         assert_eq!(1, count_possibilities_brute_force(parse_line("???? 1,2")));
-        assert_eq!(1, count_possibilities_brute_force(parse_line(".##. 1,1")));
-        assert_eq!(1, count_possibilities_brute_force(parse_line("?##? 1,1")));
-        assert_eq!(1, count_possibilities_brute_force(parse_line("#?#? 1,1")));
-        assert_eq!(4, count_possibilities_brute_force(parse_line("??#?? 1,1")));
-        assert_eq!(8, count_possibilities_brute_force(parse_line("??#??#?? 1,1,1")));
-        assert_eq!(3, count_possibilities_brute_force(parse_line("?#?#? 1,1")));
-        assert_eq!(2, count_possibilities_brute_force(parse_line(".#?#? 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("#..# 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("?..? 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line(".?.? 1,1")));
+        assert_eq!(4, count_possibilities_brute_force(parse_line("??.?? 1,1")));
+        assert_eq!(8, count_possibilities_brute_force(parse_line("??.??.?? 1,1,1")));
+        assert_eq!(3, count_possibilities_brute_force(parse_line("?.?.? 1,1")));
+        assert_eq!(2, count_possibilities_brute_force(parse_line("#.?.? 1,1")));
     }
     #[test]
     fn freedom_test() {
@@ -168,17 +166,17 @@ mod tests {
     fn feasible_test() {
         assert_eq!(true, feasible(parse_line("? 1"), 0));
         assert_eq!(true, feasible(parse_line("? 1"), 0));
-        assert_eq!(true, feasible(parse_line(". 1"), 0));
-        assert_eq!(false, feasible(parse_line("# 1"), 0));
-        assert_eq!(false, feasible(parse_line(".. 1"), 0));
+        assert_eq!(true, feasible(parse_line("# 1"), 0));
+        assert_eq!(false, feasible(parse_line(". 1"), 0));
+        assert_eq!(false, feasible(parse_line("## 1"), 0));
 
-        assert_eq!(true, feasible(parse_line(".. 2"), 0));
-        assert_eq!(false, feasible(parse_line(".# 2"), 0));
+        assert_eq!(true, feasible(parse_line("## 2"), 0));
         assert_eq!(false, feasible(parse_line("#. 2"), 0));
+        assert_eq!(false, feasible(parse_line(".# 2"), 0));
 
-        assert_eq!(true, feasible(parse_line("#.# 1"), 1));
-        assert_eq!(true, feasible(parse_line("#. 1"), 1));
-        assert_eq!(false, feasible(parse_line("..# 1"), 1));
-        assert_eq!(false, feasible(parse_line(".. 1"), 1));
+        assert_eq!(true, feasible(parse_line(".#. 1"), 1));
+        assert_eq!(true, feasible(parse_line(".# 1"), 1));
+        assert_eq!(false, feasible(parse_line("##. 1"), 1));
+        assert_eq!(false, feasible(parse_line("## 1"), 1));
     }
 }
