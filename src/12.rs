@@ -129,7 +129,7 @@ mod tests {
                 springs: vec![Spring::Operational, Spring::Operational, Spring::Unknown, Spring::Damaged],
                 ecc: vec![2, 1]
             },
-            parse_line("..?# 2,1")
+            parse_line("##?. 2,1")
         );
     }
     #[test]
@@ -178,5 +178,9 @@ mod tests {
         assert_eq!(true, feasible(parse_line(".# 1"), 1));
         assert_eq!(false, feasible(parse_line("##. 1"), 1));
         assert_eq!(false, feasible(parse_line("## 1"), 1));
+    }
+    #[test]
+    fn part1_test() {
+        assert_eq!(21, part1("inputs/12a"));
     }
 }
