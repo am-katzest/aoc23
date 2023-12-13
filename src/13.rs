@@ -79,7 +79,7 @@ fn  part1(f: &str) -> usize {
 }
 
 fn main() {
-    println!("part1: {}", part1("inputs/13a"));
+    println!("part1: {}", part1("inputs/13b"));
 }
 
 #[cfg(test)]
