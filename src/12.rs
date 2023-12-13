@@ -40,6 +40,7 @@ fn freedom(r: Row) -> usize {
     // the end and still be able to potentially succeed
     r.springs.len() - min_len(r.ecc)
 }
+
 // fn reverse(r: Row) -> Row {
 //     let mut u = r.clone();
 //     u.ecc.reverse();
@@ -92,6 +93,9 @@ fn feasible(r: Row, offset: usize) -> bool {
 
 fn count_possibilities_brute_force(r: Row) -> usize {
     if r.ecc.len() == 0 {
+        if r.springs.iter().any(|&x| x == Spring::Damaged) {
+            return 0; // impossible
+        }
         // recursion end
         return 1;
     }
@@ -112,6 +116,7 @@ fn part1(f: &str) -> usize {
         .lines()
         .map(parse_line)
         .map(count_possibilities_brute_force)
+        .inspect(|x| println!("{x}"))
         .sum()
 }
 
@@ -146,6 +151,35 @@ mod tests {
         assert_eq!(8, count_possibilities_brute_force(parse_line("??.??.?? 1,1,1")));
         assert_eq!(3, count_possibilities_brute_force(parse_line("?.?.? 1,1")));
         assert_eq!(2, count_possibilities_brute_force(parse_line("#.?.? 1,1")));
+
+        assert_eq!(
+            1,
+            count_possibilities_brute_force(Row {
+                springs: vec![Spring::Damaged],
+                ecc: vec![1]
+            })
+        );
+        assert_eq!(
+            1,
+            count_possibilities_brute_force(Row {
+                springs: vec![Spring::Unknown],
+                ecc: vec![]
+            })
+        );
+        assert_eq!(
+            0,
+            count_possibilities_brute_force(Row {
+                springs: vec![Spring::Damaged],
+                ecc: vec![]
+            })
+        );
+
+        assert_eq!(6, count_possibilities_brute_force(parse_line("????? 1,1")));
+        assert_eq!(6, count_possibilities_brute_force(parse_line("???????? 1,4")));
+        assert_eq!(2, count_possibilities_brute_force(parse_line("???#? 1,1")));
+        assert_eq!(3, count_possibilities_brute_force(parse_line("????#? 1,1")));
+        assert_eq!(6, count_possibilities_brute_force(parse_line("??????#? 1,1,1")));
+        assert_eq!(6, count_possibilities_brute_force(parse_line("?????????#? 1,4,1")));
     }
     #[test]
     fn freedom_test() {
@@ -187,10 +221,10 @@ mod tests {
         assert_eq!(true, feasible(parse_line("?.# 1"), 2));
         assert_eq!(false, feasible(parse_line("#?# 1"), 2));
         assert_eq!(true, feasible(parse_line(".?#? 1"), 2));
-
     }
     #[test]
     fn part1_test() {
         assert_eq!(21, part1("inputs/12a"));
+        assert_eq!(7286, part1("inputs/12b"));
     }
 }
