@@ -38,6 +38,7 @@ fn min_len(ecc: Vec<usize>) -> usize {
 fn freedom(r: Row) -> usize {
     // how much we can move the first element towards
     // the end and still be able to potentially succeed
+    println!("{}, {}", r.springs.len(), min_len(r.ecc.to_owned()));
     r.springs.len() - min_len(r.ecc)
 }
 
@@ -120,9 +121,9 @@ fn part1(f: &str) -> usize {
         .sum()
 }
 fn unfold(r: Row) -> Row {
-    let springs = r.springs.iter().copied().cycle().take(5*r.springs.len()).collect_vec();
-    let ecc = r.ecc.iter().copied().cycle().take(5*r.ecc.len()).collect_vec();
-    Row {ecc, springs}
+    let springs = r.springs.iter().copied().cycle().take(5 * r.springs.len()).collect_vec();
+    let ecc = r.ecc.iter().copied().cycle().take(5 * r.ecc.len()).collect_vec();
+    Row { ecc, springs }
 }
 fn part2(f: &str) -> usize {
     read_to_string(f)
