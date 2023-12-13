@@ -67,6 +67,7 @@ fn freedom(r: Row) -> usize {
 //     }
 //     Some(possible)
 // }
+
 fn cut_out_one(r: Row, offset: usize) -> Row {
     // todo use slices
     let springs = r.springs.into_iter().skip(offset + r.ecc[0] + 1).collect_vec();
@@ -97,7 +98,13 @@ fn count_possibilities_brute_force(r: Row) -> usize {
         return 1;
     }
     (0..=freedom(r.clone()))
-        .map(|i| count_possibilities_brute_force(cut_out_one(r.to_owned(), i)))
+        .map(|i| {
+            if feasible(r.to_owned(), i) {
+                count_possibilities_brute_force(cut_out_one(r.to_owned(), i))
+            } else {
+                0
+            }
+        })
         .sum()
 }
 
@@ -134,6 +141,13 @@ mod tests {
         assert_eq!(1, count_possibilities_brute_force(parse_line("??? 1,1")));
         assert_eq!(1, count_possibilities_brute_force(parse_line("???? 2,1")));
         assert_eq!(1, count_possibilities_brute_force(parse_line("???? 1,2")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line(".##. 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("?##? 1,1")));
+        assert_eq!(1, count_possibilities_brute_force(parse_line("#?#? 1,1")));
+        assert_eq!(4, count_possibilities_brute_force(parse_line("??#?? 1,1")));
+        assert_eq!(8, count_possibilities_brute_force(parse_line("??#??#?? 1,1,1")));
+        assert_eq!(3, count_possibilities_brute_force(parse_line("?#?#? 1,1")));
+        assert_eq!(2, count_possibilities_brute_force(parse_line(".#?#? 1,1")));
     }
     #[test]
     fn freedom_test() {
