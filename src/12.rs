@@ -69,20 +69,45 @@ fn freedom(r: Row) -> usize {
 // }
 fn cut_out_one(r: Row, offset: usize) -> Row {
     // todo use slices
-    let springs  = r.springs.into_iter().skip(offset + r.ecc[0] + 1).collect_vec();
+    let springs = r.springs.into_iter().skip(offset + r.ecc[0] + 1).collect_vec();
     let ecc = r.ecc.into_iter().skip(1).collect_vec();
-    Row {ecc, springs}
+    Row { ecc, springs }
+}
+
+fn feasible(r: Row, offset: usize) -> bool {
+    println!("m{:?}", r);
+    let size = r.ecc[0];
+    for i in 0..offset {
+        if r.springs[i] == Spring::Operational {
+            return false;
+        }
+    }
+    for i in offset..offset + size {
+        if r.springs[i] == Spring::Damaged {
+            return false;
+        }
+    }
+    println!("meow{:?}", r);
+    (r.springs.len() == (offset + size)) || (r.springs[offset + size] != Spring::Operational)
 }
 
 fn count_possibilities_brute_force(r: Row) -> usize {
-    if r.ecc.len() == 0 { // recursion end
-        return 1
+    if r.ecc.len() == 0 {
+        // recursion end
+        return 1;
     }
-    (0..=freedom(r.clone())).map(|i| {count_possibilities_brute_force(cut_out_one(r.to_owned(), i))}).sum()
+    (0..=freedom(r.clone()))
+        .map(|i| count_possibilities_brute_force(cut_out_one(r.to_owned(), i)))
+        .sum()
 }
 
 fn part1(f: &str) -> usize {
-    read_to_string(f).unwrap().lines().map(parse_line).map(count_possibilities_brute_force).sum()
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(parse_line)
+        .map(count_possibilities_brute_force)
+        .sum()
 }
 
 fn main() {
@@ -123,5 +148,23 @@ mod tests {
     fn cutting_test() {
         assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 2,1"), 0));
         assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 1,1"), 1));
+    }
+
+    #[test]
+    fn feasible_test() {
+        assert_eq!(true, feasible(parse_line("? 1"), 0));
+        assert_eq!(true, feasible(parse_line("? 1"), 0));
+        assert_eq!(true, feasible(parse_line(". 1"), 0));
+        assert_eq!(false, feasible(parse_line("# 1"), 0));
+        assert_eq!(false, feasible(parse_line(".. 1"), 0));
+
+        assert_eq!(true, feasible(parse_line(".. 2"), 0));
+        assert_eq!(false, feasible(parse_line(".# 2"), 0));
+        assert_eq!(false, feasible(parse_line("#. 2"), 0));
+
+        assert_eq!(true, feasible(parse_line("#.# 1"), 1));
+        assert_eq!(true, feasible(parse_line("#. 1"), 1));
+        assert_eq!(false, feasible(parse_line("..# 1"), 1));
+        assert_eq!(false, feasible(parse_line(".. 1"), 1));
     }
 }
