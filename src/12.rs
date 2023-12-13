@@ -4,8 +4,8 @@ use itertools::Itertools;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Spring {
-    Operational,
     Damaged,
+    Operational,
     Unknown,
 }
 
@@ -18,8 +18,8 @@ struct Row {
 fn parse_spring(s: char) -> Spring {
     match s {
         '?' => Spring::Unknown,
-        '#' => Spring::Operational,
-        '.' => Spring::Damaged,
+        '#' => Spring::Damaged,
+        '.' => Spring::Operational,
         _ => panic!("wrong spring {s}"),
     }
 }
@@ -78,16 +78,16 @@ fn cut_out_one(r: Row, offset: usize) -> Row {
 fn feasible(r: Row, offset: usize) -> bool {
     let size = r.ecc[0];
     for i in 0..offset {
-        if r.springs[i] == Spring::Operational {
-            return false;
-        }
-    }
-    for i in offset..offset + size {
         if r.springs[i] == Spring::Damaged {
             return false;
         }
     }
-    (r.springs.len() == (offset + size)) || (r.springs[offset + size] != Spring::Operational)
+    for i in offset..offset + size {
+        if r.springs[i] == Spring::Operational {
+            return false;
+        }
+    }
+    (r.springs.len() == (offset + size)) || (r.springs[offset + size] != Spring::Damaged)
 }
 
 fn count_possibilities_brute_force(r: Row) -> usize {
@@ -126,7 +126,7 @@ mod tests {
     fn parser_test() {
         assert_eq!(
             Row {
-                springs: vec![Spring::Operational, Spring::Operational, Spring::Unknown, Spring::Damaged],
+                springs: vec![Spring::Damaged, Spring::Damaged, Spring::Unknown, Spring::Operational],
                 ecc: vec![2, 1]
             },
             parse_line("##?. 2,1")
