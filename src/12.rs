@@ -30,12 +30,59 @@ fn parse_line(line: &str) -> Row {
     let ecc = r.split(',').map(|x| x.parse().unwrap()).collect_vec();
     Row { springs, ecc }
 }
-fn possibilities(r: Row) -> usize {
-    3
+
+fn min_len(ecc: Vec<usize>) -> usize {
+    ecc.iter().fold(0, |x, y| x + y) + ecc.len() - 1
+}
+
+fn freedom(r: Row) -> usize {
+    // how much we can move the first element towards
+    // the end and still be able to potentially succeed
+    r.springs.len() - min_len(r.ecc)
+}
+// fn reverse(r: Row) -> Row {
+//     let mut u = r.clone();
+//     u.ecc.reverse();
+//     u.springs.reverse();
+//     u
+// }
+
+// fn try_snip(r: Row) -> Option<Vec<Row>> {
+//     // attempts to snip anything it can from the front
+//     assert!(r.ecc.len() > 0);
+//     let first: usize = *r.ecc.first()?;
+//     let mut possible = vec![];
+//     let mut remaining = first;
+//     let mut sure_strat:Option<usize> = None;
+//     let mut possible_start:Option<usize> = None;
+//     let mut yielding = false;
+//     for i in 0.. {
+//         match r.springs[i] {
+//             Spring::Damaged => {
+//                 assert!(remaining == first);
+//             },
+//             Spring::Operational => {remaining += 1}
+//             Spring::Unknown => {remaining += 1} // can be
+//         }
+//     }
+//     Some(possible)
+// }
+fn cut_out_one(r: Row, offset: usize) -> Row {
+    // todo use slices
+    let springs  = r.springs.into_iter().skip(offset + r.ecc[0] + 1).collect_vec();
+    let ecc = r.ecc.into_iter().skip(1).collect_vec();
+    Row {ecc, springs}
+}
+
+fn count_possibilities_brute_force(r: Row) -> usize {
+    if r.ecc.len() == 0 { // recursion end
+        return 1
+    }
+    (0..=freedom(r.clone())).map(|i| {count_possibilities_brute_force(cut_out_one(r.to_owned(), i))}).sum()
 }
 
 fn part1(f: &str) -> usize {
-    read_to_string(f).unwrap().lines().map(parse_line).map(possibilities).sum()
+    read_to_string(f).unwrap().lines().map(parse_line).map(count_possibilities_brute_force).sum()
 }
 
 fn main() {
@@ -58,6 +105,20 @@ mod tests {
     #[test]
     fn dumb_solver_test() {
         let r = parse_line(". 1");
-        assert_eq!(1, possibilities(r));
+        assert_eq!(1, count_possibilities_brute_force(r));
+    }
+    #[test]
+    fn freedom_test() {
+        assert_eq!(0, freedom(parse_line("? 1")));
+        assert_eq!(1, freedom(parse_line("?? 1")));
+        assert_eq!(0, freedom(parse_line("?? 2")));
+        assert_eq!(0, freedom(parse_line("??? 1,1")));
+        assert_eq!(1, freedom(parse_line("???? 1,1")));
+    }
+
+    #[test]
+    fn cutting_test() {
+        assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 2,1"), 0));
+        assert_eq!(parse_line("??? 1"), cut_out_one(parse_line("?????? 1,1"), 1));
     }
 }
