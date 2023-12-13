@@ -178,6 +178,16 @@ mod tests {
         assert_eq!(true, feasible(parse_line(".# 1"), 1));
         assert_eq!(false, feasible(parse_line("##. 1"), 1));
         assert_eq!(false, feasible(parse_line("## 1"), 1));
+
+        assert_eq!(true, feasible(parse_line("..# 1"), 2));
+        assert_eq!(false, feasible(parse_line("#.# 1"), 2));
+        assert_eq!(false, feasible(parse_line("..## 1"), 2));
+        assert_eq!(true, feasible(parse_line(".?# 1"), 2));
+        assert_eq!(true, feasible(parse_line("??# 1"), 2));
+        assert_eq!(true, feasible(parse_line("?.# 1"), 2));
+        assert_eq!(false, feasible(parse_line("#?# 1"), 2));
+        assert_eq!(true, feasible(parse_line(".?#? 1"), 2));
+
     }
     #[test]
     fn part1_test() {
