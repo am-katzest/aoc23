@@ -119,9 +119,26 @@ fn part1(f: &str) -> usize {
         .inspect(|x| println!("{x}"))
         .sum()
 }
+fn unfold(r: Row) -> Row {
+    let springs = r.springs.iter().copied().cycle().take(5*r.springs.len()).collect_vec();
+    let ecc = r.ecc.iter().copied().cycle().take(5*r.ecc.len()).collect_vec();
+    Row {ecc, springs}
+}
+fn part2(f: &str) -> usize {
+    read_to_string(f)
+        .unwrap()
+        .lines()
+        .map(parse_line)
+        .map(unfold)
+        .inspect(|x| println!("{:?}", x))
+        .map(count_possibilities_brute_force)
+        .inspect(|x| println!("{x}"))
+        .sum()
+}
 
 fn main() {
     println!("part 1: {}", part1("inputs/12b"));
+    println!("part 2: {}", part2("inputs/12a"));
 }
 
 #[cfg(test)]
@@ -226,5 +243,9 @@ mod tests {
     fn part1_test() {
         assert_eq!(21, part1("inputs/12a"));
         assert_eq!(7286, part1("inputs/12b"));
+    }
+    #[test]
+    fn unfold_test() {
+        assert_eq!(unfold(parse_line("..# 1")), parse_line("..#..#..#..#..# 1,1,1,1,1"));
     }
 }
