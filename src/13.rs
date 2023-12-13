@@ -21,7 +21,7 @@ enum Tile {
 fn parse_tile(t: char) -> Tile {
     match t {
         '.' => Tile::Ash,
-        'J' => Tile::Rocks,
+        '#' => Tile::Rocks,
         _ => panic!("the fuck is {t}"),
     }
 }
@@ -52,6 +52,9 @@ where
     T: PartialEq,
 {
     for i in 0.. {
+        if i > start {
+            return true;
+        }
         match (u.get(start - i), u.get(start + i + 1)) {
             (Some(x), Some(y)) if x != y => return false,
             (Some(x), Some(y)) if x == y => {}
@@ -61,12 +64,22 @@ where
     panic!()
 }
 
-fn meow<T>(u: Vec<T>) -> usize where T:PartialEq, T:Clone, {
-    find_reflections(u.to_owned()).iter().copied().filter(|i|  check_reflection(u.to_owned(), *i)).next().unwrap()
+fn above_reflection<T>(u: &Vec<T>) -> usize where T:PartialEq, T:Clone, {
+    match find_reflections(u.to_owned()).iter().copied().filter(|i|  check_reflection(u.to_owned(), *i)).next() {
+        Some(x) => x + 1,
+        None => 0
+    }
+}
+
+fn summarize(u: Field) -> usize {
+    100 * above_reflection(&u) + above_reflection(&transpose(u))
+}
+fn  part1(f: &str) -> usize {
+    parse(f).into_iter().map(summarize).inspect(|x| println!("{:?}", x)).sum()
 }
 
 fn main() {
-    parse("inputs/13a");
+    println!("part1: {}", part1("inputs/13a"));
 }
 
 #[cfg(test)]
@@ -77,7 +90,15 @@ mod tests {
         assert_eq!(vec![2], find_reflections(vec![1, 2, 3, 3, 5, 7]));
         assert_eq!(vec![0, 2], find_reflections(vec![2, 2, 3, 3, 5, 7]));
     }
+    #[test]
     fn part1_test () {
-        assert_eq!(1, meow(vec![2, 2]));
+        assert_eq!(1, above_reflection(&vec![2, 2]));
+        assert_eq!(2, above_reflection(&vec![3, 2, 2]));
+        assert_eq!(2, above_reflection(&vec![3, 2, 2, 3]));
+        assert_eq!(1, above_reflection(&vec![2, 2, 3]));
+        assert_eq!(1, above_reflection(&vec![2, 2, 3]));
+        assert_eq!(1, above_reflection(&vec![2, 2, 3]));
+        assert_eq!(0, above_reflection(&vec![2, 3, 1, 1, 3, 22, 33]));
+        assert_eq!(5, above_reflection(&vec![4, 3, 2, 1, 0, 0, 1, 2, 3]));
     }
 }
