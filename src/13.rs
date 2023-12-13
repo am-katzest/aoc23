@@ -11,31 +11,17 @@ where
         .collect()
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum Tile {
-    Ash,
-    Rocks,
-}
-
-fn parse_tile(t: char) -> Tile {
-    match t {
-        '.' => Tile::Ash,
-        '#' => Tile::Rocks,
-        _ => panic!("the fuck is {t}"),
-    }
-}
-
-type Field = Vec<Vec<Tile>>;
+type Field = Vec<Vec<char>>;
 
 fn parse_field(f: &str) -> Field {
-    f.lines().map(|x| x.chars().map(parse_tile).collect_vec()).collect_vec()
+    f.lines().map(|x| x.chars().collect_vec()).collect_vec()
 }
 
 fn parse(f: &str) -> Vec<Field> {
     std::fs::read_to_string(f).unwrap().split("\n\n").map(parse_field).collect()
 }
 
-fn defects(a: &Vec<Tile>, b: &Vec<Tile>) -> usize {
+fn defects(a: &Vec<char>, b: &Vec<char>) -> usize {
     std::iter::zip(a, b).filter(|(a, b)| a != b).count()
 }
 
@@ -51,10 +37,10 @@ fn count_defects(u: Field, start: usize) -> usize {
 }
 
 fn above_reflection(u: &Field, defects: usize) -> usize {
-    match (0..(u.len() - 1)).find(|i| count_defects(u.to_owned(), *i) == defects) {
-        Some(x) => x + 1,
-        None => 0,
-    }
+    (0..(u.len() - 1))
+        .find(|i| count_defects(u.to_owned(), *i) == defects)
+        .map(|x| x + 1)
+        .unwrap_or(0)
 }
 
 fn summarize(u: Field, defects: usize) -> usize {
