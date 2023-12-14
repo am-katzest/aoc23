@@ -121,8 +121,8 @@ fn part1(f: &str) -> usize {
         .sum()
 }
 fn unfold(r: Row) -> Row {
-    let springs = r.springs.iter().copied().cycle().take(5 * r.springs.len()).collect_vec();
-    let ecc = r.ecc.iter().copied().cycle().take(5 * r.ecc.len()).collect_vec();
+    let springs = r.springs.iter().copied().cycle().take(1 * r.springs.len()).collect_vec();
+    let ecc = r.ecc.iter().copied().cycle().take(1 * r.ecc.len()).collect_vec();
     Row { ecc, springs }
 }
 fn part2(f: &str) -> usize {
