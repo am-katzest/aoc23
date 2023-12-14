@@ -38,7 +38,6 @@ fn min_len(ecc: Vec<usize>) -> usize {
 fn freedom(r: Row) -> usize {
     // how much we can move the first element towards
     // the end and still be able to potentially succeed
-    println!("{}, {}", r.springs.len(), min_len(r.ecc.to_owned()));
     r.springs.len() - min_len(r.ecc)
 }
 
@@ -115,21 +114,27 @@ fn part1(f: &str) -> usize {
     read_to_string(f)
         .unwrap()
         .lines()
+        .inspect(|x| println!("{:?}", x))
         .map(parse_line)
         .map(count_possibilities_brute_force)
         .inspect(|x| println!("{x}"))
         .sum()
 }
+
 fn unfold(r: Row) -> Row {
-    let springs = r.springs.iter().copied().cycle().take(5 * r.springs.len()).collect_vec();
+    let mut e = r.springs.clone();
+    e.push(Spring::Unknown);
+    let springs = e.iter().copied().cycle().take(5 * r.springs.len() + 4).collect_vec();
     let ecc = r.ecc.iter().copied().cycle().take(5 * r.ecc.len()).collect_vec();
     Row { ecc, springs }
 }
+
 fn part2(f: &str) -> usize {
     read_to_string(f)
         .unwrap()
         .lines()
         .map(parse_line)
+        .inspect(|x| println!("{:?}", x))
         .map(unfold)
         .inspect(|x| println!("{:?}", x))
         .map(count_possibilities_brute_force)
@@ -138,7 +143,7 @@ fn part2(f: &str) -> usize {
 }
 
 fn main() {
-    println!("part 1: {}", part1("inputs/12b"));
+    //println!("part 1: {}", part1("inputs/12b"));
     println!("part 2: {}", part2("inputs/12a"));
 }
 
@@ -247,6 +252,10 @@ mod tests {
     }
     #[test]
     fn unfold_test() {
-        assert_eq!(unfold(parse_line("..# 1")), parse_line("..#..#..#..#..# 1,1,1,1,1"));
+        assert_eq!(unfold(parse_line("..# 1")), parse_line("..#?..#?..#?..#?..# 1,1,1,1,1"));
+    }
+    #[test]
+    fn urgh_test() {
+        assert_eq!(1, count_possibilities_brute_force(unfold(parse_line("???.### 1,1,3"))));
     }
 }
