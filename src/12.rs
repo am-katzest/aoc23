@@ -32,7 +32,7 @@ fn parse_line(line: &str) -> Row {
 }
 
 fn min_len(ecc: Vec<usize>) -> usize {
-    ecc.iter().fold(0, |x, y| x + y) + ecc.len() - 1
+    ecc.iter().sum::<usize>() + ecc.len() - 1
 }
 
 fn freedom(r: Row) -> usize {
