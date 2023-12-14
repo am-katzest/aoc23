@@ -10,6 +10,7 @@ itertools = "0.10.3"
 rand = "0.8.3"
 substring = "1.4.5"
 num-integer = "0.1.44"
+memoize = "0.4.1"
 
 [[bin]]
 name = "1"

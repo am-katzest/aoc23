@@ -1,15 +1,15 @@
 use std::fs::read_to_string;
-
+use memoize::memoize;
 use itertools::Itertools;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 enum Spring {
     Damaged,
     Operational,
     Unknown,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 struct Row {
     springs: Vec<Spring>,
     ecc: Vec<usize>,
@@ -91,6 +91,7 @@ fn feasible(r: Row, offset: usize) -> bool {
     (r.springs.len() == (offset + size)) || (r.springs[offset + size] != Spring::Damaged)
 }
 
+#[memoize]
 fn count_possibilities_brute_force(r: Row) -> usize {
     if r.ecc.len() == 0 {
         if r.springs.iter().any(|&x| x == Spring::Damaged) {
@@ -114,10 +115,8 @@ fn part1(f: &str) -> usize {
     read_to_string(f)
         .unwrap()
         .lines()
-        .inspect(|x| println!("{:?}", x))
         .map(parse_line)
         .map(count_possibilities_brute_force)
-        .inspect(|x| println!("{x}"))
         .sum()
 }
 
@@ -134,17 +133,14 @@ fn part2(f: &str) -> usize {
         .unwrap()
         .lines()
         .map(parse_line)
-        .inspect(|x| println!("{:?}", x))
         .map(unfold)
-        .inspect(|x| println!("{:?}", x))
         .map(count_possibilities_brute_force)
-        .inspect(|x| println!("{x}"))
         .sum()
 }
 
 fn main() {
-    //println!("part 1: {}", part1("inputs/12b"));
-    println!("part 2: {}", part2("inputs/12a"));
+    println!("part 1: {}", part1("inputs/12b"));
+    println!("part 2: {}", part2("inputs/12b"));
 }
 
 #[cfg(test)]
