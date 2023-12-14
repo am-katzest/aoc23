@@ -1,6 +1,6 @@
-use std::fs::read_to_string;
-use memoize::memoize;
 use itertools::Itertools;
+use memoize::memoize;
+use std::fs::read_to_string;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 enum Spring {
@@ -40,34 +40,6 @@ fn freedom(r: Row) -> usize {
     // the end and still be able to potentially succeed
     r.springs.len() - min_len(r.ecc)
 }
-
-// fn reverse(r: Row) -> Row {
-//     let mut u = r.clone();
-//     u.ecc.reverse();
-//     u.springs.reverse();
-//     u
-// }
-
-// fn try_snip(r: Row) -> Option<Vec<Row>> {
-//     // attempts to snip anything it can from the front
-//     assert!(r.ecc.len() > 0);
-//     let first: usize = *r.ecc.first()?;
-//     let mut possible = vec![];
-//     let mut remaining = first;
-//     let mut sure_strat:Option<usize> = None;
-//     let mut possible_start:Option<usize> = None;
-//     let mut yielding = false;
-//     for i in 0.. {
-//         match r.springs[i] {
-//             Spring::Damaged => {
-//                 assert!(remaining == first);
-//             },
-//             Spring::Operational => {remaining += 1}
-//             Spring::Unknown => {remaining += 1} // can be
-//         }
-//     }
-//     Some(possible)
-// }
 
 fn cut_first(r: Row, offset: usize) -> Row {
     // todo use slices
