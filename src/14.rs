@@ -60,34 +60,24 @@ fn shove_line_right(m: &mut Row) {
         m[i] = Tile::Round;
     }
 }
-fn shr(a: &mut Map) {
+fn right(m: Map) -> Map {
+    let mut a = m.clone();
     for i in 0..a.len() {
         shove_line_right(&mut a[i]);
     }
-}
-
-fn right(m: Map) -> Map {
-    let mut a = m.clone();
-    shr(&mut a);
     a
 }
 
 fn left(m: Map) -> Map {
-    let mut a = flip(m);
-    shr(&mut a);
-    flip(a)
+    flip(right(flip(m)))
 }
 
 fn up(m: Map) -> Map {
-    let mut a = transpose(reverse(m));
-    shr(&mut a);
-    reverse(transpose(a))
+    reverse(transpose(right(transpose(reverse(m)))))
 }
 
 fn down(m: Map) -> Map {
-    let mut a = transpose(m);
-    shr(&mut a);
-    transpose(a)
+    transpose(right(transpose(m)))
 }
 
 fn spin(m: Map) -> Map {
