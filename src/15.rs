@@ -1,6 +1,6 @@
 
-fn hash(s: String) -> i32 {
-    s.as_bytes().iter().fold(0, |acc, x| ((acc + *x as i32) * 17) % 256)
+fn hash(s: String) -> u8 {
+    s.as_bytes().iter().fold(0, |acc, x| ((acc + *x as i32) * 17) % 256) as u8
 }
 
 fn read(f: &str) -> Vec<String> {
@@ -8,7 +8,7 @@ fn read(f: &str) -> Vec<String> {
 }
 
 fn part1(f: &str) -> i32 {
-    read(f).into_iter().map(hash).sum()
+    read(f).into_iter().map(hash).map(|x| x as i32).sum()
 }
 
 fn main() {
