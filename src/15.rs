@@ -20,9 +20,9 @@ struct Addr {
     hash: usize,
 }
 
-enum Op {
-    Remove(Addr),
-    Add(Addr, usize),
+struct Op {
+    addr: Addr,
+    lens:Option<usize>
 }
 
 fn parse(f: String) -> Op {
@@ -35,9 +35,9 @@ fn parse(f: String) -> Op {
     match f.contains('=') {
         true => {
             let lens = u[1].parse::<usize>().unwrap();
-            Op::Add(addr, lens)
+            Op {addr, lens: Some(lens)}
         }
-        false => Op::Remove(addr),
+        false => Op {addr, lens: None},
     }
 }
 type Box = Vec<(String, usize)>;
@@ -60,17 +60,22 @@ fn add(b: &mut Box, label: String, lens: usize) {
     }
 }
 
+fn apply(b: &mut Box, op:Op) {
+        match op.lens {
+            None => {
+                remove(b, op.addr.label);
+            }
+            Some(lens) => {
+                add(b, op.addr.label, lens);
+            }
+        }
+}
+
 fn part2(f: &str) -> usize {
     let mut boxes: Vec<Box> = std::iter::repeat(vec![]).take(256).collect();
     for s in read(f) {
-        match parse(s) {
-            Op::Remove(addr) => {
-                remove(&mut boxes[addr.hash], addr.label);
-            }
-            Op::Add(addr, lens) => {
-                add(&mut boxes[addr.hash], addr.label, lens);
-            }
-        }
+        let op = parse(s);
+        apply(&mut boxes[op.addr.hash], op);
     }
     boxes.into_iter().enumerate().map(|(b,x)| x.into_iter().enumerate().map(|(i, (_, l))| l*(i+1)*(b+1)).sum::<usize>()).sum()
 }
