@@ -32,13 +32,8 @@ fn parse(f: String) -> Op {
         hash: hash(label.clone()),
         label,
     };
-    match f.contains('=') {
-        true => {
-            let lens = u[1].parse::<usize>().unwrap();
-            Op {addr, lens: Some(lens)}
-        }
-        false => Op {addr, lens: None},
-    }
+    let lens = u[1].parse::<usize>().ok();
+    Op {addr, lens}
 }
 type Box = Vec<(String, usize)>;
 
