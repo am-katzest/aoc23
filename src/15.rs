@@ -15,25 +15,16 @@ fn read(f: &str) -> Vec<String> {
         .collect()
 }
 
-struct Addr {
-    label: String,
-    hash: usize,
-}
-
 struct Op {
-    addr: Addr,
+    label: String,
     lens:Option<usize>
 }
 
 fn parse(f: String) -> Op {
     let u = f.split(|c| c == '=' || c == '-').collect_vec();
     let label = String::from(u[0].clone());
-    let addr = Addr {
-        hash: hash(label.clone()),
-        label,
-    };
     let lens = u[1].parse::<usize>().ok();
-    Op {addr, lens}
+    Op {label, lens}
 }
 type Box = Vec<(String, usize)>;
 
@@ -58,10 +49,10 @@ fn add(b: &mut Box, label: String, lens: usize) {
 fn apply(b: &mut Box, op:Op) {
         match op.lens {
             None => {
-                remove(b, op.addr.label);
+                remove(b, op.label);
             }
             Some(lens) => {
-                add(b, op.addr.label, lens);
+                add(b, op.label, lens);
             }
         }
 }
@@ -70,7 +61,7 @@ fn part2(f: &str) -> usize {
     let mut boxes: Vec<Box> = std::iter::repeat(vec![]).take(256).collect();
     for s in read(f) {
         let op = parse(s);
-        apply(&mut boxes[op.addr.hash], op);
+        apply(&mut boxes[hash(op.label.clone())], op);
     }
     boxes.into_iter().enumerate().map(|(b,x)| x.into_iter().enumerate().map(|(i, (_, l))| l*(i+1)*(b+1)).sum::<usize>()).sum()
 }
