@@ -1,6 +1,6 @@
 use itertools::Itertools;
+use std::collections::HashSet;
 use std::fs::read_to_string;
-use std::iter;
 use std::ops::Index;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -16,7 +16,7 @@ enum Axis {
     Vertical,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Dir {
     Left,
     Right,
@@ -64,8 +64,8 @@ fn step(d: Dir, (x, y): Coord, m: &Map) -> Option<Coord> {
     let (mx, my) = m.size;
     match d {
         Dir::Left if x > 0 => Some((x - 1, y)),
-        Dir::Right if x < mx => Some((x + 1, y)),
-        Dir::Down if y < my => Some((x, y + 1)),
+        Dir::Right if x < (mx - 1) => Some((x + 1, y)),
+        Dir::Down if y < (my - 1) => Some((x, y + 1)),
         Dir::Up if y > 0 => Some((x, y - 1)),
         _ => None,
     }
@@ -102,12 +102,11 @@ fn parse(f: &str) -> Map {
         .lines()
         .map(|l| l.chars().map(parse_tile).collect_vec())
         .collect_vec();
-    let mut start = (0, 0);
     let size = (tiles[0].len(), tiles.len());
     Map { tiles, size }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct Photon {
     dir: Dir,
     coord: Coord,
@@ -120,21 +119,31 @@ fn proceed(m: &Map, w: Photon) -> Vec<Photon> {
     }
 }
 
-fn part1(m: Map, d: Dir) -> usize {
-    //create_loop(m, d).count() / 2
-    3
+fn part1(f: &str) -> usize {
+    let map = parse(f);
+    let mut photons = vec![Photon {
+        dir: Dir::Right,
+        coord: (0, 0),
+    }];
+    let mut visited: HashSet<Photon> = HashSet::new();
+    loop {
+        for p in photons.iter().copied() {
+            visited.insert(p);
+        }
+        photons = photons
+            .into_iter()
+            .flat_map(|x| proceed(&map, x))
+            .filter(|x| !visited.contains(x))
+            .collect_vec();
+        if photons.len() == 0 {
+            break;
+        }
+    }
+    visited.iter().map(|x| x.coord).unique().count()
 }
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum Field {
-    Energized,
-    Dormant,
-}
-
-static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
 
 fn main() {
-    //println!("part 1: {:?}", part1(parse("inputs/10b"), Dir::Up));
+    println!("part 1: {:?}", part1("inputs/16b"));
     //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
 }
 
@@ -164,6 +173,5 @@ mod tests {
 
         assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('-')));
         assert_eq!(vec![Dir::Right], distort(Dir::Right, parse_tile('-')));
-
     }
 }
