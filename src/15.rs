@@ -75,73 +75,37 @@ mod tests {
     #[test]
     fn remove_test1() {
         let mut b: Box = vec![(String::from("meow"), 3)];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("meow"),
-                lens: None,
-            },
-        );
+        apply(&mut b, parse(String::from("meow-")));
         assert_eq!(b, vec![]);
     }
     #[test]
     fn remove_test2() {
         let mut b: Box = vec![(String::from("mraow"), 3)];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("meow"),
-                lens: None,
-            },
-        );
+        apply(&mut b, parse(String::from("meow-")));
         assert_eq!(b, vec![(String::from("mraow"), 3)]);
     }
     #[test]
     fn remove_test3() {
         let mut b: Box = vec![(String::from("meow"), 3), (String::from("mraow"), 3)];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("meow"),
-                lens: None,
-            },
-        );
+        apply(&mut b, parse(String::from("meow-")));
         assert_eq!(b, vec![(String::from("mraow"), 3)]);
     }
     #[test]
     fn add_test1() {
         let mut b: Box = vec![];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("meow"),
-                lens: Some(3),
-            },
-        );
+        apply(&mut b, parse(String::from("meow=3")));
         assert_eq!(b, vec![(String::from("meow"), 3)]);
     }
     #[test]
     fn add_test2() {
         let mut b: Box = vec![(String::from("meow"), 5)];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("meow"),
-                lens: Some(3),
-            },
-        );
+        apply(&mut b, parse(String::from("meow=3")));
         assert_eq!(b, vec![(String::from("meow"), 3)]);
     }
     #[test]
     fn add_test3() {
         let mut b: Box = vec![(String::from("meow"), 5)];
-        apply(
-            &mut b,
-            Op {
-                label: String::from("mraow"),
-                lens: Some(3),
-            },
-        );
+        apply(&mut b, parse(String::from("mraow=3")));
         assert_eq!(b, vec![(String::from("meow"), 5), (String::from("mraow"), 3)]);
     }
 }
