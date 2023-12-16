@@ -113,18 +113,20 @@ struct Photon {
 }
 
 fn proceed(m: &Map, w: Photon) -> Vec<Photon> {
-    match step(w.dir, w.coord, m) {
-        None => vec![],
-        Some(coord) => distort(w.dir, m[coord]).iter().map(|&dir| Photon { dir, coord }).collect_vec(),
-    }
+    distort(w.dir, m[w.coord])
+        .iter()
+        .filter_map(|&dir| step(dir, w.coord, m).map(|coord| Photon { dir, coord }))
+        .collect_vec()
 }
 
 fn part1(f: &str) -> usize {
     let map = parse(f);
-    let mut photons = vec![Photon {
+    let initial = Photon {
         dir: Dir::Right,
         coord: (0, 0),
-    }];
+    };
+    let mut photons = vec![initial];
+    //let mut photons = distort(initial.dir, map[(0, 0)]).map(|dir| Photon {dir, coord: initial.coord}).collect_vec();
     let mut visited: HashSet<Photon> = HashSet::new();
     loop {
         for p in photons.iter().copied() {
@@ -173,5 +175,10 @@ mod tests {
 
         assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('-')));
         assert_eq!(vec![Dir::Right], distort(Dir::Right, parse_tile('-')));
+    }
+    #[test]
+    fn part1_test() {
+        assert_eq!(46, part1("inputs/16a"));
+        assert_eq!(7870, part1("inputs/16b"));
     }
 }
