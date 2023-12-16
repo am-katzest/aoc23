@@ -119,7 +119,7 @@ fn proceed(m: &Map, w: Photon) -> Vec<Photon> {
         .collect_vec()
 }
 
-fn run(map :Map, initial: Photon) -> HashSet<Photon> {
+fn run(map: &Map, initial: Photon) -> HashSet<Photon> {
     let mut photons = vec![initial];
     //let mut photons = distort(initial.dir, map[(0, 0)]).map(|dir| Photon {dir, coord: initial.coord}).collect_vec();
     let mut visited: HashSet<Photon> = HashSet::new();
@@ -139,18 +139,81 @@ fn run(map :Map, initial: Photon) -> HashSet<Photon> {
     visited
 }
 
+fn part2(f: &str) -> usize {
+    let map = parse(f);
+    let mut pending: HashSet<Photon> = vec![
+        (0..map.size.0)
+            .map(|x| Photon {
+                dir: Dir::Down,
+                coord: (x, 0),
+            })
+            .collect_vec(),
+        (0..map.size.0)
+            .map(|x| Photon {
+                dir: Dir::Up,
+                coord: (x, map.size.1 - 1),
+            })
+            .collect_vec(),
+        (0..map.size.1)
+            .map(|y| Photon {
+                dir: Dir::Right,
+                coord: (0, y),
+            })
+            .collect_vec(),
+        (0..map.size.1)
+            .map(|y| Photon {
+                dir: Dir::Left,
+                coord: (map.size.0 - 1, y),
+            })
+            .collect_vec(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    let mut best_so_far = 0;
+    let mut ctr = 0;
+    loop {
+        ctr += 1;
+        match pending.iter().next() {
+            Some(initial) => {
+                let res = run(&map, *initial);
+                let current = count(&res);
+                if current > best_so_far {
+                    best_so_far = current
+                }
+                for i in res {
+                    pending.remove(&i);
+                    pending.remove(&Photon {
+                        coord: i.coord,
+                        dir: opposite(i.dir),
+                    });
+                }
+            }
+            None => {
+                break;
+            }
+        }
+    }
+    print!("looped {} times", ctr);
+    best_so_far
+}
+
+fn count(f: &HashSet<Photon>) -> usize {
+    f.iter().map(|x| x.coord).unique().count()
+}
+
 fn part1(f: &str) -> usize {
     let map = parse(f);
     let initial = Photon {
         dir: Dir::Right,
         coord: (0, 0),
     };
-    run(map, initial).iter().map(|x| x.coord).unique().count()
+    count(&run(&map, initial))
 }
 
 fn main() {
     println!("part 1: {:?}", part1("inputs/16b"));
-    //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
+    println!("part 2: {:?}", part2("inputs/16b"));
 }
 
 #[cfg(test)]
