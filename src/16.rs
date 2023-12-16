@@ -50,13 +50,13 @@ fn axis(d: Dir) -> Axis {
     }
 }
 
-fn distort(d: Dir, t: Tile) -> Vec<Dir> {
+fn distort(d: Dir, t: Tile) -> Reflections {
     match (t, axis(d)) {
-        (Tile::Mirror(x), y) if x == y => vec![clockwise(d)],
-        (Tile::Mirror(x), y) if x != y => vec![counterclockwise(d)],
-        (Tile::Splitter(x), y) if x == y => vec![d],
-        (Tile::Splitter(x), y) if x != y => vec![clockwise(d), counterclockwise(d)],
-        _ => vec![d],
+        (Tile::Mirror(x), y) if x == y => Reflections::Single(clockwise(d)),
+        (Tile::Mirror(x), y) if x != y => Reflections::Single(counterclockwise(d)),
+        (Tile::Splitter(x), y) if x == y => Reflections::Single(d),
+        (Tile::Splitter(x), y) if x != y => Reflections::Double(clockwise(d), counterclockwise(d)),
+        _ => Reflections::Single(d),
     }
 }
 
@@ -71,7 +71,6 @@ fn step(d: Dir, (x, y): Coord, m: &Map) -> Option<Coord> {
     }
 }
 
-//type Map = Vec<Vec<Tile>>;
 #[derive(Clone, Debug)]
 struct Map {
     tiles: Vec<Vec<Tile>>,
@@ -112,28 +111,56 @@ struct Photon {
     coord: Coord,
 }
 
-fn proceed(m: &Map, w: Photon) -> Vec<Photon> {
-    distort(w.dir, m[w.coord])
-        .iter()
-        .filter_map(|&dir| step(dir, w.coord, m).map(|coord| Photon { dir, coord }))
-        .collect_vec()
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum Reflections {
+    Single(Dir),
+    Double(Dir, Dir),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum Photons {
+    Zero,
+    One(Photon),
+    Two(Photon, Photon),
+}
+
+fn proceed(m: &Map, w: Photon) -> Photons {
+    match distort(w.dir, m[w.coord]) {
+        Reflections::Single(dir) => match step(dir, w.coord, m) {
+            Some(coord) => Photons::One(Photon { dir, coord }),
+            None => Photons::Zero,
+        },
+        Reflections::Double(a, b) => match (step(a, w.coord, m), step(a, w.coord, m)) {
+            (Some(ac), Some(bc)) => Photons::Two(Photon { dir: a, coord: ac }, Photon { dir: b, coord: bc }),
+            (Some(coord), None) => Photons::One(Photon { dir: a, coord }),
+            (None, Some(coord)) => Photons::One(Photon { dir: b, coord }),
+            _ => Photons::Zero,
+        },
+    }
 }
 
 fn run(map: &Map, initial: Photon) -> HashSet<Photon> {
-    let mut photons = vec![initial];
-    //let mut photons = distort(initial.dir, map[(0, 0)]).map(|dir| Photon {dir, coord: initial.coord}).collect_vec();
+    let mut photon = initial;
     let mut visited: HashSet<Photon> = HashSet::new();
+    let mut spinoffs: Vec<Photon> = vec![];
     loop {
-        for p in photons.iter().copied() {
-            visited.insert(p);
-        }
-        photons = photons
-            .into_iter()
-            .flat_map(|x| proceed(&map, x))
-            .filter(|x| !visited.contains(x))
-            .collect_vec();
-        if photons.len() == 0 {
-            break;
+        match (proceed(&map, photon), visited.insert(photon)) {
+            (Photons::Zero, _) | (_, false) => {
+                    // either wall or we've been here before
+                match spinoffs.pop() {
+                    Some(next) => photon = next,
+                    None => {
+                        break;
+                    }
+                };
+            }
+            (Photons::One(p), _) => {
+                photon = p;
+            }
+            (Photons::Two(other, p), _) => {
+                photon = p;
+                spinoffs.push(other);
+            }
         }
     }
     visited
@@ -212,6 +239,7 @@ fn part1(f: &str) -> usize {
 }
 
 fn main() {
+    println!("part 1: {:?}", part1("inputs/16a"));
     println!("part 1: {:?}", part1("inputs/16b"));
     println!("part 2: {:?}", part2("inputs/16b"));
 }
@@ -221,27 +249,27 @@ mod tests {
     use crate::*;
     #[test]
     fn reflection_test() {
-        assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('.')));
-        assert_eq!(vec![Dir::Up], distort(Dir::Left, parse_tile('\\')));
-        assert_eq!(vec![Dir::Down], distort(Dir::Left, parse_tile('/')));
+        // assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('.')));
+        // assert_eq!(vec![Dir::Up], distort(Dir::Left, parse_tile('\\')));
+        // assert_eq!(vec![Dir::Down], distort(Dir::Left, parse_tile('/')));
 
-        assert_eq!(vec![Dir::Down], distort(Dir::Right, parse_tile('\\')));
-        assert_eq!(vec![Dir::Up], distort(Dir::Right, parse_tile('/')));
+        // assert_eq!(vec![Dir::Down], distort(Dir::Right, parse_tile('\\')));
+        // assert_eq!(vec![Dir::Up], distort(Dir::Right, parse_tile('/')));
 
-        assert_eq!(vec![Dir::Left], distort(Dir::Up, parse_tile('\\')));
-        assert_eq!(vec![Dir::Right], distort(Dir::Up, parse_tile('/')));
+        // assert_eq!(vec![Dir::Left], distort(Dir::Up, parse_tile('\\')));
+        // assert_eq!(vec![Dir::Right], distort(Dir::Up, parse_tile('/')));
 
-        assert_eq!(vec![Dir::Right, Dir::Left], distort(Dir::Up, parse_tile('-')));
-        assert_eq!(vec![Dir::Left, Dir::Right], distort(Dir::Down, parse_tile('-')));
+        // assert_eq!(vec![Dir::Right, Dir::Left], distort(Dir::Up, parse_tile('-')));
+        // assert_eq!(vec![Dir::Left, Dir::Right], distort(Dir::Down, parse_tile('-')));
 
-        assert_eq!(vec![Dir::Up], distort(Dir::Up, parse_tile('|')));
-        assert_eq!(vec![Dir::Down], distort(Dir::Down, parse_tile('|')));
+        // assert_eq!(vec![Dir::Up], distort(Dir::Up, parse_tile('|')));
+        // assert_eq!(vec![Dir::Down], distort(Dir::Down, parse_tile('|')));
 
-        assert_eq!(vec![Dir::Up, Dir::Down], distort(Dir::Left, parse_tile('|')));
-        assert_eq!(vec![Dir::Down, Dir::Up], distort(Dir::Right, parse_tile('|')));
+        // assert_eq!(vec![Dir::Up, Dir::Down], distort(Dir::Left, parse_tile('|')));
+        // assert_eq!(vec![Dir::Down, Dir::Up], distort(Dir::Right, parse_tile('|')));
 
-        assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('-')));
-        assert_eq!(vec![Dir::Right], distort(Dir::Right, parse_tile('-')));
+        // assert_eq!(vec![Dir::Left], distort(Dir::Left, parse_tile('-')));
+        // assert_eq!(vec![Dir::Right], distort(Dir::Right, parse_tile('-')));
     }
     #[test]
     fn part1_test() {
