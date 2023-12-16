@@ -17,44 +17,29 @@ fn read(f: &str) -> Vec<String> {
 
 struct Op {
     label: String,
-    lens:Option<usize>
+    lens: Option<usize>,
 }
 
 fn parse(f: String) -> Op {
     let u = f.split(|c| c == '=' || c == '-').collect_vec();
     let label = String::from(u[0].clone());
     let lens = u[1].parse::<usize>().ok();
-    Op {label, lens}
+    Op { label, lens }
 }
 type Box = Vec<(String, usize)>;
 
-fn remove(b: &mut Box, label: String) {
-    match b.iter().find_position(|(l, _)| *l == label) {
-        None => {}
-        Some((i, _)) => {
+fn apply(b: &mut Box, op: Op) {
+    let pos = b.iter().find_position(|(l, _)| *l == op.label).map(|(i, _)| i);
+    match (op.lens, pos) {
+        // insert
+        (Some(lens), None) => b.push((op.label, lens)),
+        (Some(lens), Some(i)) => b[i] = (op.label, lens),
+        // remove
+        (None, Some(i)) => {
             b.remove(i);
         }
+        _ => {}
     }
-}
-
-fn add(b: &mut Box, label: String, lens: usize) {
-    match b.iter().find_position(|(l, _)| *l == label) {
-        None => b.push((label, lens)),
-        Some((i, _)) => {
-            b[i] = (label, lens);
-        }
-    }
-}
-
-fn apply(b: &mut Box, op:Op) {
-        match op.lens {
-            None => {
-                remove(b, op.label);
-            }
-            Some(lens) => {
-                add(b, op.label, lens);
-            }
-        }
 }
 
 fn part2(f: &str) -> usize {
@@ -63,7 +48,11 @@ fn part2(f: &str) -> usize {
         let op = parse(s);
         apply(&mut boxes[hash(op.label.clone())], op);
     }
-    boxes.into_iter().enumerate().map(|(b,x)| x.into_iter().enumerate().map(|(i, (_, l))| l*(i+1)*(b+1)).sum::<usize>()).sum()
+    boxes
+        .into_iter()
+        .enumerate()
+        .map(|(b, x)| x.into_iter().enumerate().map(|(i, (_, l))| l * (i + 1) * (b + 1)).sum::<usize>())
+        .sum()
 }
 
 fn part1(f: &str) -> i32 {
@@ -86,37 +75,73 @@ mod tests {
     #[test]
     fn remove_test1() {
         let mut b: Box = vec![(String::from("meow"), 3)];
-        remove(&mut b, String::from("meow"));
+        apply(
+            &mut b,
+            Op {
+                label: String::from("meow"),
+                lens: None,
+            },
+        );
         assert_eq!(b, vec![]);
     }
     #[test]
     fn remove_test2() {
         let mut b: Box = vec![(String::from("mraow"), 3)];
-        remove(&mut b, String::from("meow"));
+        apply(
+            &mut b,
+            Op {
+                label: String::from("meow"),
+                lens: None,
+            },
+        );
         assert_eq!(b, vec![(String::from("mraow"), 3)]);
     }
     #[test]
     fn remove_test3() {
         let mut b: Box = vec![(String::from("meow"), 3), (String::from("mraow"), 3)];
-        remove(&mut b, String::from("meow"));
+        apply(
+            &mut b,
+            Op {
+                label: String::from("meow"),
+                lens: None,
+            },
+        );
         assert_eq!(b, vec![(String::from("mraow"), 3)]);
     }
     #[test]
     fn add_test1() {
         let mut b: Box = vec![];
-        add(&mut b, String::from("meow"), 3);
+        apply(
+            &mut b,
+            Op {
+                label: String::from("meow"),
+                lens: Some(3),
+            },
+        );
         assert_eq!(b, vec![(String::from("meow"), 3)]);
     }
     #[test]
     fn add_test2() {
         let mut b: Box = vec![(String::from("meow"), 5)];
-        add(&mut b, String::from("meow"), 3);
+        apply(
+            &mut b,
+            Op {
+                label: String::from("meow"),
+                lens: Some(3),
+            },
+        );
         assert_eq!(b, vec![(String::from("meow"), 3)]);
     }
     #[test]
     fn add_test3() {
         let mut b: Box = vec![(String::from("meow"), 5)];
-        add(&mut b, String::from("mraow"), 3);
+        apply(
+            &mut b,
+            Op {
+                label: String::from("mraow"),
+                lens: Some(3),
+            },
+        );
         assert_eq!(b, vec![(String::from("meow"), 5), (String::from("mraow"), 3)]);
     }
 }
