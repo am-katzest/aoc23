@@ -119,12 +119,7 @@ fn proceed(m: &Map, w: Photon) -> Vec<Photon> {
         .collect_vec()
 }
 
-fn part1(f: &str) -> usize {
-    let map = parse(f);
-    let initial = Photon {
-        dir: Dir::Right,
-        coord: (0, 0),
-    };
+fn run(map :Map, initial: Photon) -> HashSet<Photon> {
     let mut photons = vec![initial];
     //let mut photons = distort(initial.dir, map[(0, 0)]).map(|dir| Photon {dir, coord: initial.coord}).collect_vec();
     let mut visited: HashSet<Photon> = HashSet::new();
@@ -141,7 +136,16 @@ fn part1(f: &str) -> usize {
             break;
         }
     }
-    visited.iter().map(|x| x.coord).unique().count()
+    visited
+}
+
+fn part1(f: &str) -> usize {
+    let map = parse(f);
+    let initial = Photon {
+        dir: Dir::Right,
+        coord: (0, 0),
+    };
+    run(map, initial).iter().map(|x| x.coord).unique().count()
 }
 
 fn main() {
