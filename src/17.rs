@@ -70,9 +70,8 @@ fn parse(f: &str) -> Map {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-// we can't hash for this one ;-;
 struct Nav {
-    total_cost: usize, // Ord will check this first, rest doesn't matter
+    total_cost: usize, // Ord will check this first, rest doesn't *really* matter
     temp_drop: usize,
     dir: Dir,
     coord: Coord,
@@ -129,7 +128,7 @@ fn solve(f: &str, t: Turning) -> usize {
     let mut queue: BTreeSet<Nav> = BTreeSet::new();
     let mut visited: HashMap<(Coord, Dir, usize), usize> = HashMap::new();
     queue.insert(initial);
-    queue.insert(Nav {dir: Dir::Down, ..initial});
+    queue.insert(Nav { dir: Dir::Down, ..initial });
     loop {
         let current = queue.pop_first().unwrap(); // we add them faster than we take them
         if finished(current, &map, t) {
@@ -138,13 +137,13 @@ fn solve(f: &str, t: Turning) -> usize {
         let d = current.dir;
         for dir in [d, clockwise(d), counterclockwise(d)] {
             match create(&map, current, dir, t) {
-                Some(x) => {
-                    let k = (x.coord, x.dir, x.tiles_straight);
+                Some(child) => {
+                    let k = (child.coord, child.dir, child.tiles_straight);
                     match visited.get(&k) {
-                        Some(temp) if *temp < x.temp_drop => {}
+                        Some(previous_temp) if *previous_temp < child.temp_drop => {}
                         _ => {
-                            visited.insert(k, x.temp_drop);
-                            queue.insert(x);
+                            visited.insert(k, child.temp_drop);
+                            queue.insert(child);
                         }
                     }
                 }
@@ -158,7 +157,6 @@ fn main() {
     println!("part 1: {:?}", solve("inputs/17b", (0, 3)));
     println!("part 2: {:?}", solve("inputs/17b", (4, 10)));
 }
-
 
 #[cfg(test)]
 mod tests {
