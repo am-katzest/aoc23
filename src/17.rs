@@ -124,18 +124,15 @@ fn solve(f: &str, t: Turning) -> usize {
         coord: (0, 0),
         temp_drop: 0,
         total_cost: to_end((0, 0), &map),
-        tiles_straight: 1,
+        tiles_straight: 0,
     };
-    let mut ctr = 0;
     let mut queue: BTreeSet<Nav> = BTreeSet::new();
     let mut visited: HashMap<(Coord, Dir, usize), usize> = HashMap::new();
     queue.insert(initial);
     queue.insert(Nav {dir: Dir::Down, ..initial});
     loop {
         let current = queue.pop_first().unwrap(); // we add them faster than we take them
-        ctr += 1;
         if finished(current, &map, t) {
-            println!("iterations: {:?}", ctr);
             return current.temp_drop;
         }
         let d = current.dir;
@@ -158,8 +155,10 @@ fn solve(f: &str, t: Turning) -> usize {
 }
 
 fn main() {
-    println!("part 1: {:?}", part1("inputs/17b"));
+    println!("part 1: {:?}", solve("inputs/17b", (0, 3)));
+    println!("part 2: {:?}", solve("inputs/17b", (4, 10)));
 }
+
 
 #[cfg(test)]
 mod tests {
