@@ -78,16 +78,16 @@ struct Nav {
     coord: Coord,
     tiles_straight: usize,
 }
-static MAX: usize = 3;
-fn create(m: &Map, parent: Nav, dir: Dir) -> Option<Nav> {
-    let tiles_straight = if parent.dir == dir {
-        if parent.tiles_straight >= MAX {
-            return None;
-        }
-        parent.tiles_straight + 1
-    } else {
-        1
+type Turning = (usize, usize);
+
+fn create(m: &Map, parent: Nav, dir: Dir, (min, max): Turning) -> Option<Nav> {
+    if dir == parent.dir && parent.tiles_straight >= max {
+        return None;
     };
+    if dir != parent.dir && parent.tiles_straight < min {
+        return None;
+    }
+    let tiles_straight = if parent.dir == dir { parent.tiles_straight + 1 } else { 1 };
     match step(dir, parent.coord, m) {
         None => None,
         Some(coord) => {
@@ -112,12 +112,12 @@ fn to_end(u: Coord, m: &Map) -> usize {
     (tx - x) + (ty - y)
 }
 
-fn finished(n: Nav, m: &Map) -> bool {
+fn finished(n: Nav, m: &Map, (min, _): Turning) -> bool {
     let (x, y) = n.coord;
-    m.size == (x + 1, y + 1)
+    m.size == (x + 1, y + 1) && n.tiles_straight >= min
 }
 
-fn part1(f: &str) -> usize {
+fn solve(f: &str, t: Turning) -> usize {
     let map = parse(f);
     let initial = Nav {
         dir: Dir::Right, // should be able to pivot downwards
@@ -130,16 +130,17 @@ fn part1(f: &str) -> usize {
     let mut queue: BTreeSet<Nav> = BTreeSet::new();
     let mut visited: HashMap<(Coord, Dir, usize), usize> = HashMap::new();
     queue.insert(initial);
+    queue.insert(Nav {dir: Dir::Down, ..initial});
     loop {
         let current = queue.pop_first().unwrap(); // we add them faster than we take them
         ctr += 1;
-        if finished(current, &map) {
+        if finished(current, &map, t) {
             println!("iterations: {:?}", ctr);
             return current.temp_drop;
         }
         let d = current.dir;
         for dir in [d, clockwise(d), counterclockwise(d)] {
-            match create(&map, current, dir) {
+            match create(&map, current, dir, t) {
                 Some(x) => {
                     let k = (x.coord, x.dir, x.tiles_straight);
                     match visited.get(&k) {
@@ -158,4 +159,18 @@ fn part1(f: &str) -> usize {
 
 fn main() {
     println!("part 1: {:?}", part1("inputs/17b"));
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    #[test]
+    fn part1_test() {
+        assert_eq!(102, solve("inputs/17a", (0, 3)));
+    }
+    #[test]
+    fn part2_test() {
+        assert_eq!(94, solve("inputs/17a", (4, 10)));
+        assert_eq!(71, solve("inputs/17c", (4, 10)));
+    }
 }
