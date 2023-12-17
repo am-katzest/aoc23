@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::fs::read_to_string;
 use std::ops::Index;
 
@@ -116,6 +116,7 @@ fn finished(n: Nav, m: &Map) -> bool {
     let (x, y) = n.coord;
     m.size == (x + 1, y + 1)
 }
+
 fn part1(f: &str) -> usize {
     let map = parse(f);
     let initial = Nav {
@@ -125,18 +126,29 @@ fn part1(f: &str) -> usize {
         total_cost: to_end((0, 0), &map),
         tiles_straight: 1,
     };
+    let mut ctr = 0;
     let mut queue: BTreeSet<Nav> = BTreeSet::new();
+    let mut visited: HashMap<(Coord, Dir, usize), usize> = HashMap::new();
     queue.insert(initial);
     loop {
         let current = queue.pop_first().unwrap(); // we add them faster than we take them
+        ctr += 1;
         if finished(current, &map) {
+            println!("iterations: {:?}", ctr);
             return current.temp_drop;
         }
         let d = current.dir;
         for dir in [d, clockwise(d), counterclockwise(d)] {
             match create(&map, current, dir) {
                 Some(x) => {
-                    queue.insert(x);
+                    let k = (x.coord, x.dir, x.tiles_straight);
+                    match visited.get(&k) {
+                        Some(temp) if *temp < x.temp_drop => {}
+                        _ => {
+                            visited.insert(k, x.temp_drop);
+                            queue.insert(x);
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -145,5 +157,5 @@ fn part1(f: &str) -> usize {
 }
 
 fn main() {
-    println!("part 1: {:?}", part1("inputs/17a"));
+    println!("part 1: {:?}", part1("inputs/17b"));
 }
