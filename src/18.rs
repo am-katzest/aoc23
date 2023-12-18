@@ -111,23 +111,18 @@ fn solve(instr: Vec<Instruction>) -> isize {
 }
 
 fn bars(segments: &Vec<Segment>, a:Axis) -> Vec<Segment> {
-    let bars = segments
+    segments
         .iter()
-        .filter_map(|&s| match s.axis==a {
-            false => None,
-            true => Some(s),
-        })
-        .collect_vec();
-    bars
+        .copied()
+        .filter(|x| x.axis == a)
+        .collect_vec()
 }
 
 fn breakpoints(segments: &Vec<Segment>, a: Axis) -> Vec<isize> {
     segments
         .iter()
-        .filter_map(|&s| match s.axis == a {
-            false => None,
-            true => Some(s.altitude),
-        })
+        .filter(|x| x.axis == a)
+        .map(|&s| s.altitude)
         .sorted()
         .unique()
         .collect_vec()
