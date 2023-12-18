@@ -1,8 +1,33 @@
 use itertools::Itertools;
-use substring::Substring;
 use std::fs::read_to_string;
-use std::ops::Index;
-use std::iter;
+use substring::Substring;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Axis {
+    Horizontal,
+    Vertical,
+}
+
+fn axis(d: Dir) -> Axis {
+    match d {
+        Dir::Up | Dir::Down => Axis::Vertical,
+        Dir::Left | Dir::Right => Axis::Horizontal,
+    }
+}
+
+fn on(a: Axis, c: Coord) -> isize {
+    match a {
+        Axis::Vertical => c.1,
+        Axis::Horizontal => c.0,
+    }
+}
+
+fn off(a: Axis, c: Coord) -> isize {
+    match a {
+        Axis::Vertical => c.0,
+        Axis::Horizontal => c.1,
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum Dir {
@@ -12,31 +37,14 @@ enum Dir {
     Up,
 }
 
-type Coord = (usize, usize);
+type Coord = (isize, isize);
 
-fn clockwise(x: Dir) -> Dir {
-    match x {
-        Dir::Left => Dir::Up,
-        Dir::Right => Dir::Down,
-        Dir::Down => Dir::Left,
-        Dir::Up => Dir::Right,
-    }
-}
-
-fn opposite(x: Dir) -> Dir {
-    clockwise(clockwise(x))
-}
-
-fn counterclockwise(x: Dir) -> Dir {
-    clockwise(opposite(x))
-}
-
-fn step(d: Dir, (x, y): Coord) -> Coord {
+fn step(d: Dir, (x, y): Coord, n: isize) -> Coord {
     match d {
-        Dir::Left => (x - 1, y),
-        Dir::Right => (x + 1, y),
-        Dir::Down => (x, y + 1),
-        Dir::Up => (x, y - 1),
+        Dir::Left => (x - n, y),
+        Dir::Right => (x + n, y),
+        Dir::Down => (x, y + n),
+        Dir::Up => (x, y - n),
     }
 }
 
@@ -44,14 +52,13 @@ fn step(d: Dir, (x, y): Coord) -> Coord {
 enum Tile {
     Undug,
     Trench,
-    Filling
+    Filling,
 }
-
 
 #[derive(Clone, Debug, PartialEq)]
 struct Instruction {
-    dir:Dir,
-    length:usize
+    dir: Dir,
+    length: isize,
 }
 
 fn parse_line(l: &str) -> Instruction {
@@ -63,110 +70,89 @@ fn parse_line(l: &str) -> Instruction {
         "U" => Dir::Up,
         _ => panic!("wrong dir, {d}"),
     };
-    let length = l.parse::<usize>().unwrap();
-    Instruction {dir, length}
+    let length = l.parse::<isize>().unwrap();
+    Instruction { dir, length }
 }
 
 fn parse_line2(l: &str) -> Instruction {
     let (_, _, c) = l.split_whitespace().collect_tuple().unwrap();
     let l = c.substring(2, 7);
     let dir = match c.chars().nth(7).unwrap() {
-        '0'=> Dir::Right,
+        '0' => Dir::Right,
         '2' => Dir::Left,
-        '1'=> Dir::Down,
+        '1' => Dir::Down,
         '3' => Dir::Up,
         _ => panic!(";-;"),
     };
-    let length = usize::from_str_radix(l, 16).unwrap();
-    Instruction {dir, length}
-}
-
-fn unroll(i: Instruction) -> Vec<Dir> {
-    iter::repeat(i.dir).take(i.length).collect_vec()
+    let length = isize::from_str_radix(l, 16).unwrap();
+    Instruction { dir, length }
 }
 
 fn parse(f: &str, parse_line: fn(&str) -> Instruction) -> Vec<Instruction> {
-    read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(parse_line)
-        .collect()
+    read_to_string(f).unwrap().lines().map(parse_line).collect()
 }
 
-
-static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
-
-fn fill(f: &mut Vec<Vec<Tile>>, c: Coord) {
-    if f[c.1][c.0] == Tile::Undug {
-        f[c.1][c.0] = Tile::Filling;
-        for dir in DIRECTIONS {
-            fill(f, step(*dir, c));
-        }
-    }
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Segment {
+    axis: Axis,
+    start: isize,
+    end: isize,
+    altitude: isize,
 }
 
-fn solve(f: &str) -> usize {
-    let instr = parse(f, parse_line);
-    let x = 500;
-    let y = 400;
-    let row = iter::repeat(Tile::Undug).take(x).collect_vec();
-    let mut map = iter::repeat(row).take(y).collect_vec();
-    let mut c: Coord = (150, 200);
-    let f: Coord = (151, 201);
-    map[c.1][c.0] = Tile::Trench;
-    for d in instr.into_iter().flat_map(unroll).collect_vec() {
-        c = step(d, c);
-        map[c.1][c.0] = Tile::Trench;
-    }
-    fill(&mut map, f);
-    print(&map);
-    map.into_iter().flatten().filter(|x| *x != Tile::Undug).count()
-}
-
-
-fn solve2(f: &str) -> usize {
-    let instr = parse(f, parse_line2);
-    let x = 500;
-    let y = 400;
-    let row = iter::repeat(Tile::Undug).take(x).collect_vec();
-    let mut map = iter::repeat(row).take(y).collect_vec();
-    let mut c: Coord = (150, 200);
-    let f: Coord = (151, 201);
-    map[c.1][c.0] = Tile::Trench;
-    for d in instr.into_iter().flat_map(unroll).collect_vec() {
-        c = step(d, c);
-        map[c.1][c.0] = Tile::Trench;
-    }
-    fill(&mut map, f);
-    print(&map);
-    map.into_iter().flatten().filter(|x| *x != Tile::Undug).count()
-}
-fn print(map: &Vec<Vec<Tile>>) {
-    for r in map {
-        for c in r {
-            let u = match c {
-                Tile::Trench => '#',
-                Tile::Undug => '.',
-                Tile::Filling => '@',
-            };
-            print!("{u}");
-        }
-        println!("");
-    }
+fn solve(instr: Vec<Instruction>) -> isize {
+    // a bit redundant, but i like it :3
+    let segments = instr
+        .into_iter()
+        .scan((0, 0), |pos0, i| {
+            let pos1 = step(i.dir, *pos0, i.length);
+            let axis = axis(i.dir);
+            let start = on(axis, pos1).min(on(axis, *pos0));
+            let end = on(axis, pos1).max(on(axis, *pos0));
+            let altitude = off(axis, *pos0);
+            let s = Segment { axis, start, end, altitude };
+            *pos0 = pos1;
+            Some(s)
+        })
+        .collect_vec();
+    // we are scanning left to right
+    let changes = segments
+        .iter()
+        .filter_map(|&s| match s.axis {
+            Axis::Horizontal => None,
+            Axis::Vertical => Some(s.altitude),
+        })
+        .sorted()
+        .unique()
+        .collect_vec();
+    let bars = segments
+        .iter()
+        .filter_map(|&s| match s.axis {
+            Axis::Vertical => None,
+            Axis::Horizontal => Some(s),
+        })
+        .collect_vec();
+    println!("{:?}", bars);
+    3
 }
 
 fn main() {
-    println!("part 2: {:?}", solve("inputs/18a"));
-    println!("part 2: {:?}", solve("inputs/18b"));
+    println!("part 1: {:?}", solve(parse("inputs/18a", parse_line)));
+    //    println!("part 2: {:?}", solve("inputs/18b"));
 }
-
 
 #[cfg(test)]
 mod tests {
     use crate::*;
     #[test]
     fn parsing_test() {
-        assert_eq!(Instruction {dir: Dir::Right, length: 6}, parse_line("R 6 (#70c710)"));
-        assert_eq!(Instruction {dir: Dir::Right, length: 461937}, parse_line2("R 6 (#70c710)"));
+        assert_eq!(Instruction { dir: Dir::Right, length: 6 }, parse_line("R 6 (#70c710)"));
+        assert_eq!(
+            Instruction {
+                dir: Dir::Right,
+                length: 461937
+            },
+            parse_line2("R 6 (#70c710)")
+        );
     }
 }
