@@ -102,7 +102,39 @@ struct Segment {
 
 fn solve(instr: Vec<Instruction>) -> isize {
     // a bit redundant, but i like it :3
-    let segments = instr
+    let segments = segmentize(instr);
+    // we are scanning left to right
+    let changes = breakpoints(&segments, Axis::Vertical);
+    let bars = bars(&segments, Axis::Horizontal);
+    println!("{:?}", bars);
+    3
+}
+
+fn bars(segments: &Vec<Segment>, a:Axis) -> Vec<Segment> {
+    let bars = segments
+        .iter()
+        .filter_map(|&s| match s.axis==a {
+            false => None,
+            true => Some(s),
+        })
+        .collect_vec();
+    bars
+}
+
+fn breakpoints(segments: &Vec<Segment>, a: Axis) -> Vec<isize> {
+    segments
+        .iter()
+        .filter_map(|&s| match s.axis == a {
+            false => None,
+            true => Some(s.altitude),
+        })
+        .sorted()
+        .unique()
+        .collect_vec()
+}
+
+fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
+    instr
         .into_iter()
         .scan((0, 0), |pos0, i| {
             let pos1 = step(i.dir, *pos0, i.length);
@@ -114,26 +146,7 @@ fn solve(instr: Vec<Instruction>) -> isize {
             *pos0 = pos1;
             Some(s)
         })
-        .collect_vec();
-    // we are scanning left to right
-    let changes = segments
-        .iter()
-        .filter_map(|&s| match s.axis {
-            Axis::Horizontal => None,
-            Axis::Vertical => Some(s.altitude),
-        })
-        .sorted()
-        .unique()
-        .collect_vec();
-    let bars = segments
-        .iter()
-        .filter_map(|&s| match s.axis {
-            Axis::Vertical => None,
-            Axis::Horizontal => Some(s),
-        })
-        .collect_vec();
-    println!("{:?}", bars);
-    3
+        .collect_vec()
 }
 
 fn main() {
