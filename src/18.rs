@@ -48,12 +48,6 @@ fn step(d: Dir, (x, y): Coord, n: isize) -> Coord {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum Tile {
-    Undug,
-    Trench,
-    Filling,
-}
 
 #[derive(Clone, Debug, PartialEq)]
 struct Instruction {
@@ -249,4 +243,13 @@ mod tests {
             parse_line2("R 6 (#70c710)")
         );
     }
+    #[test]
+    fn solver_test() {
+        assert_eq!(62, solve(parse("inputs/18a", parse_line)));
+        assert_eq!(49061, solve(parse("inputs/18b", parse_line)));
+
+        assert_eq!(952408144115, solve(parse("inputs/18a", parse_line2)));
+        assert_eq!(92556825427032, solve(parse("inputs/18b", parse_line2)));
+    }
+
 }
