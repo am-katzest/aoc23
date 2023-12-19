@@ -2,30 +2,10 @@ use itertools::Itertools;
 use std::fs::read_to_string;
 use substring::Substring;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Axis {
-    Horizontal,
-    Vertical,
-}
-
-fn axis(d: Dir) -> Axis {
+fn horizontal(d: Dir) -> bool {
     match d {
-        Dir::Up | Dir::Down => Axis::Vertical,
-        Dir::Left | Dir::Right => Axis::Horizontal,
-    }
-}
-
-fn on(a: Axis, c: Coord) -> isize {
-    match a {
-        Axis::Vertical => c.1,
-        Axis::Horizontal => c.0,
-    }
-}
-
-fn off(a: Axis, c: Coord) -> isize {
-    match a {
-        Axis::Vertical => c.0,
-        Axis::Horizontal => c.1,
+        Dir::Up | Dir::Down => false,
+        Dir::Left | Dir::Right => true,
     }
 }
 
@@ -88,7 +68,6 @@ fn parse(f: &str, parse_line: fn(&str) -> Instruction) -> Vec<Instruction> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Segment {
     altitude: isize,
-    axis: Axis,
     start: isize,
     end: isize,
 }
@@ -184,8 +163,8 @@ fn solve(instr: Vec<Instruction>) -> isize {
     // a bit redundant, but i like it :3
     let segments = segmentize(instr);
     // we are scanning left to right
-    let changes = breakpoints(&segments, Axis::Vertical);
-    let bars = bars(&segments, Axis::Horizontal);
+    let changes = breakpoints(&segments);
+    let bars = segments;
     let mut acc = 0;
     for (i, i1) in changes.iter().copied().tuple_windows() {
         acc += height(&bars, i); // at the edge
@@ -195,18 +174,8 @@ fn solve(instr: Vec<Instruction>) -> isize {
     acc
 }
 
-fn bars(segments: &Vec<Segment>, a: Axis) -> Vec<Segment> {
-    segments.iter().copied().filter(|x| x.axis == a).collect_vec()
-}
-
-fn breakpoints(segments: &Vec<Segment>, a: Axis) -> Vec<isize> {
-    segments
-        .iter()
-        .filter(|x| x.axis == a)
-        .map(|&s| s.altitude)
-        .sorted()
-        .unique()
-        .collect_vec()
+fn breakpoints(segments: &Vec<Segment>) -> Vec<isize> {
+    segments.iter().flat_map(|s| vec![s.start, s.end]).sorted().unique().collect_vec()
 }
 
 fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
@@ -214,14 +183,18 @@ fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
         .into_iter()
         .scan((0, 0), |pos0, i| {
             let pos1 = step(i.dir, *pos0, i.length);
-            let axis = axis(i.dir);
-            let start = on(axis, pos1).min(on(axis, *pos0));
-            let end = on(axis, pos1).max(on(axis, *pos0));
-            let altitude = off(axis, *pos0);
-            let s = Segment { axis, start, end, altitude };
+            let start = pos0.0.min(pos1.0);
+            let end = pos0.0.max(pos1.0);
+            let altitude = pos0.1;
+            let s = Segment { start, end, altitude };
             *pos0 = pos1;
-            Some(s)
+            if horizontal(i.dir) {
+                Some(Some(s))
+            } else {
+                Some(None)
+            }
         })
+        .filter_map(|x| x)
         .collect_vec()
 }
 
