@@ -152,6 +152,32 @@ fn part1((ws, ps): Data, initial: String) -> isize {
         .filter(|&p| accepted(&ws, p, initial.to_owned()))
         .fold(0, |acc, x| acc + sum(x))
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+struct Range {
+    min: isize,
+    max: isize
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+struct PartRange {
+    x: Range,
+    m: Range,
+    a: Range,
+    s: Range,
+}
+
+impl Index<Key> for PartRange {
+    type Output = Range;
+    fn index(&self, k: Key) -> &Range {
+        match k {
+            Key::X => &self.x,
+            Key::M => &self.m,
+            Key::A => &self.a,
+            Key::S => &self.s,
+        }
+    }
+}
+
 
 fn main() {
     println!("part1: {}", part1(parse("inputs/19b"), String::from("in")));
