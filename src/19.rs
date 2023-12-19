@@ -6,7 +6,7 @@ use itertools::Itertools;
 enum Target {
     Reject,
     Accept,
-    Workflow(String),
+    Step(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -31,15 +31,10 @@ struct Guard {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-struct Instruction {
-    target: Target,
+struct Step {
     guard: Guard,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-struct Workflow {
-    instructions: Vec<Instruction>,
-    default: Target,
+    on_true: Target,
+    on_false: Target,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -86,37 +81,51 @@ fn parse_guard(g: &str) -> Guard {
     Guard { op, value, key }
 }
 
-fn parse_instruction(i: &str) -> Instruction {
+fn parse_instruction(i: &str) -> (Target, Guard) {
     let (g, t) = i.split(':').collect_tuple().unwrap();
     let guard = parse_guard(g);
     let target = parse_target(t);
-    Instruction { target, guard }
+    (target, guard)
 }
 
 fn parse_target(t: &str) -> Target {
     match t {
         "A" => Target::Accept,
         "R" => Target::Reject,
-        x => Target::Workflow(String::from(x)),
+        x => Target::Step(String::from(x)),
     }
 }
 
-fn parse_workflow(w: &str) -> (String, Workflow) {
+fn parse_workflow_unroll(w: &str) -> Vec<(String, Step)> {
     let (name, c, _) = w.split(|x| x == '}' || x == '{').collect_tuple().unwrap();
     let mut is = c.split(',').rev();
     let default = parse_target(is.next().unwrap());
-    let instructions = is.rev().map(parse_instruction).collect_vec();
-    (String::from(name), Workflow { instructions, default })
+    let basename = String::from(name);
+    let mut pos = c.split(',').count() - 1;
+    let mut acc = vec![];
+    let mut on_false = default;
+    // we are moving from the back to the front, splitting workflow into steps
+    for (on_true, guard) in is.map(parse_instruction) {
+        pos -= 1;
+        let name = match pos {
+            0 => basename.to_owned(),
+            x => format!("{}{}", basename, x),
+        };
+        acc.push((name.to_owned(), Step { on_true, on_false, guard }));
+        on_false = Target::Step(name);
+    }
+    acc
 }
-type Workflows = HashMap<String, Workflow>;
-type Data = (Workflows, Vec<Part>);
+
+type Steps = HashMap<String, Step>;
+type Data = (Steps, Vec<Part>);
 
 fn parse(f: &str) -> Data {
     let content = std::fs::read_to_string(f).unwrap();
     let (w, p) = content.split("\n\n").collect_tuple().unwrap();
-    let workflows: HashMap<String, Workflow> = w.lines().map(parse_workflow).collect();
+    let steps: Steps = w.lines().flat_map(parse_workflow_unroll).collect();
     let parts = p.lines().map(parse_part).collect();
-    (workflows, parts)
+    (steps, parts)
 }
 
 fn matches(g: Guard, p: Part) -> bool {
@@ -126,20 +135,19 @@ fn matches(g: Guard, p: Part) -> bool {
     }
 }
 
-fn next(wf: Workflow, p: Part) -> Target {
-    for i in wf.instructions {
-        if matches(i.guard, p) {
-            return i.target;
-        }
+fn next(s: Step, p: Part) -> Target {
+    if matches(s.guard, p) {
+        s.on_true
+    } else {
+        s.on_false
     }
-    wf.default
 }
 
-fn accepted(wfs: &Workflows, p: Part, current: String) -> bool {
+fn accepted(wfs: &Steps, p: Part, current: String) -> bool {
     match next(wfs.get(&current).unwrap().to_owned(), p) {
         Target::Reject => false,
         Target::Accept => true,
-        Target::Workflow(x) => accepted(wfs, p, x),
+        Target::Step(x) => accepted(wfs, p, x),
     }
 }
 
@@ -231,33 +239,28 @@ fn split_part(g: Guard, r: PartRange) -> (Option<PartRange>, Option<PartRange>) 
     (a.map(merge), b.map(merge))
 }
 
-fn try_follow(acc: &mut Vec<PartRange>, wfs: &Workflows, p: PartRange, (current, i): (Target, usize)) {
+fn try_follow(acc: &mut Vec<PartRange>, wfs: &Steps, p: PartRange, current: Target) {
     match current {
         Target::Reject => {}
         Target::Accept => acc.push(p),
-        Target::Workflow(x) => follow(acc, wfs, p, (x, i)),
+        Target::Step(x) => follow(acc, wfs, p, x),
     }
 }
 
-fn follow(acc: &mut Vec<PartRange>, wfs: &Workflows, p: PartRange, (current, i): (String, usize)) {
-    let wf = wfs.get(&current).unwrap();
-    if i >= wf.instructions.len() {
-        try_follow(acc, wfs, p, (wf.default.to_owned(), 0));
-        return;
-    }
-    let instr = wf.instructions[i].to_owned();
-    let (matching, nonmatching) = split_part(instr.guard, p);
+fn follow(acc: &mut Vec<PartRange>, ss: &Steps, p: PartRange, current: String) {
+    let step = ss.get(&current).unwrap();
+    let (matching, nonmatching) = split_part(step.guard, p);
     match matching {
-        Some(p) => try_follow(acc, wfs, p, (instr.target.to_owned(), 0)),
+        Some(p) => try_follow(acc, ss, p, step.on_true.to_owned()),
         None => {}
     }
     match nonmatching {
-        Some(p) => follow(acc, wfs, p, (current, i + 1)),
+        Some(p) => try_follow(acc, ss, p, step.on_false.to_owned()),
         None => {}
     }
 }
 
-fn part2(ws: Workflows, init: String) -> isize {
+fn part2(ws: Steps, init: String) -> isize {
     let mut acc: Vec<PartRange> = vec![];
     let full = Range { min: 1, max: 4000 };
     let initial = PartRange {
@@ -266,7 +269,7 @@ fn part2(ws: Workflows, init: String) -> isize {
         a: full,
         s: full,
     };
-    follow(&mut acc, &ws, initial, (init, 0));
+    follow(&mut acc, &ws, initial, init);
     acc.into_iter().map(possibilities).sum()
 }
 
@@ -295,20 +298,23 @@ mod tests {
             key: Key::M,
         };
         assert_eq!(g, parse_guard("m>2090"));
-        assert_eq!(
-            Instruction {
-                guard: g,
-                target: Target::Accept
-            },
-            parse_instruction("m>2090:A")
-        );
-        let a = parse_instruction("a<2006:qkq");
-        let b = parse_instruction("m>2090:A");
+        assert_eq!((Target::Accept, g), parse_instruction("m>2090:A"));
+        let (at, ag) = parse_instruction("a<2006:qkq");
+        let (bt, bg) = parse_instruction("m>2090:A");
         let default = parse_target("rfg");
-        let instructions = vec![a, b];
+        let s1 = Step {
+            on_true: at,
+            on_false: Target::Step(String::from("px1")),
+            guard: ag,
+        };
+        let s2 = Step {
+            on_true: bt,
+            on_false: default,
+            guard: bg,
+        };
         assert_eq!(
-            (String::from("px"), Workflow { instructions, default }),
-            parse_workflow("px{a<2006:qkq,m>2090:A,rfg}")
+            vec![(String::from("px1"), s2), (String::from("px"), s1)],
+            parse_workflow_unroll("px{a<2006:qkq,m>2090:A,rfg}")
         );
     }
     #[test]
