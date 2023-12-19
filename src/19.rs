@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap, ops::Index, ops::IndexMut};
 
 use itertools::Itertools;
 
@@ -147,6 +147,14 @@ fn sum(p: Part) -> isize {
     p.x + p.m + p.a + p.s
 }
 
+fn length(r: Range) -> isize {
+    r.max - r.min + 1
+}
+
+fn possibilities(p: PartRange) -> isize {
+    length(p.x) * length(p.m) * length(p.a) * length(p.s)
+}
+
 fn part1((ws, ps): Data, initial: String) -> isize {
     ps.into_iter()
         .filter(|&p| accepted(&ws, p, initial.to_owned()))
@@ -180,6 +188,17 @@ impl Index<Key> for PartRange {
     }
 }
 
+impl IndexMut<Key> for PartRange {
+    fn index_mut(&mut self, k: Key) -> &mut Range {
+        match k {
+            Key::X => &mut self.x,
+            Key::M => &mut self.m,
+            Key::A => &mut self.a,
+            Key::S => &mut self.s,
+        }
+    }
+}
+
 fn below(p: isize, r: Range) -> Option<Range> {
     if r.min >= p {
         None
@@ -202,13 +221,58 @@ fn split(g: Guard, r: Range) -> (Option<Range>, Option<Range>) {
         Op::Greater => (above(g.value, r), below(g.value + 1, r)),
     }
 }
+fn split_part(g: Guard, r: PartRange) -> (Option<PartRange>, Option<PartRange>) {
+    let (a, b) = split(g, r[g.key]);
+    let merge = |nr: Range| {
+        let mut u = r.clone();
+        u[g.key] = nr;
+        u
+    };
+    (a.map(merge), b.map(merge))
+}
 
-fn part2(ws: Workflows) -> isize {
-    3
+fn try_follow(acc: &mut Vec<PartRange>, wfs: &Workflows, p: PartRange, (current, i): (Target, usize)) {
+    match current {
+        Target::Reject => {}
+        Target::Accept => acc.push(p),
+        Target::Workflow(x) => follow(acc, wfs, p, (x, i)),
+    }
+}
+
+fn follow(acc: &mut Vec<PartRange>, wfs: &Workflows, p: PartRange, (current, i): (String, usize)) {
+    let wf = wfs.get(&current).unwrap();
+    if i >= wf.instructions.len() {
+        try_follow(acc, wfs, p, (wf.default.to_owned(), 0));
+        return;
+    }
+    let instr = wf.instructions[i].to_owned();
+    let (matching, nonmatching) = split_part(instr.guard, p);
+    match matching {
+        Some(p) => try_follow(acc, wfs, p, (instr.target.to_owned(), 0)),
+        None => {}
+    }
+    match nonmatching {
+        Some(p) => follow(acc, wfs, p, (current, i + 1)),
+        None => {}
+    }
+}
+
+fn part2(ws: Workflows, init: String) -> isize {
+    let mut acc: Vec<PartRange> = vec![];
+    let full = Range { min: 1, max: 4000 };
+    let initial = PartRange {
+        x: full,
+        m: full,
+        a: full,
+        s: full,
+    };
+    follow(&mut acc, &ws, initial, (init, 0));
+    acc.into_iter().map(possibilities).sum()
 }
 
 fn main() {
     println!("part1: {}", part1(parse("inputs/19b"), String::from("in")));
+    println!("part2: {}", part2(parse("inputs/19b").0, String::from("in")));
 }
 
 #[cfg(test)]
@@ -264,7 +328,11 @@ mod tests {
         assert_eq!(mkr(0, 9), below(10, s));
         assert_eq!(mkr(0, 0), below(1, s));
         assert_eq!(None, below(0, s));
-        let b4 = Guard { op: Op::Lesser, value: 4, key: Key::X };
+        let b4 = Guard {
+            op: Op::Lesser,
+            value: 4,
+            key: Key::X,
+        };
         assert_eq!((mkr(0, 3), mkr(4, 10)), split(b4, s));
     }
 }
