@@ -142,25 +142,19 @@ fn height(ss: &Vec<Segment>, x: isize) -> isize {
     let mut entered = 0;
     for (edge, alt) in intersections {
         let a = match (state, edge) {
-            (_, State::Outside) | (State::Side(_), State::Inside) => {
-                panic!();
-            }
             (State::Outside, e) => {
-                state = e; //TODO
+                state = e;
                 Action::Enter
             }
-            // leaving side
             (State::Side(x), State::Side(y)) if x == y => {
                 state = State::Outside;
                 Action::Leave
             }
-            // entering into main body (while being on side)
             (State::Side(x), State::Side(y)) if x != y => {
                 state = State::Inside;
                 Action::Neither
             }
             (State::Inside, State::Inside) => {
-                // leaving
                 state = State::Outside;
                 Action::Leave
             }
@@ -182,7 +176,6 @@ fn height(ss: &Vec<Segment>, x: isize) -> isize {
             }
             Action::Neither => {}
         }
-        //println!("{:?}, {} (am {:?})", edge, alt, state);
     }
     acc
 }
