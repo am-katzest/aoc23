@@ -48,7 +48,6 @@ fn step(d: Dir, (x, y): Coord, n: isize) -> Coord {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 struct Instruction {
     dir: Dir,
@@ -102,7 +101,7 @@ enum Side {
     Left,
     Right,
 }
-fn other(s:Side) -> Side {
+fn other(s: Side) -> Side {
     match s {
         Side::Left => Side::Right,
         Side::Right => Side::Left,
@@ -113,7 +112,7 @@ fn other(s:Side) -> Side {
 enum State {
     Inside,
     Outside,
-    Side(Side)
+    Side(Side),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -149,28 +148,30 @@ fn height(ss: &Vec<Segment>, x: isize) -> isize {
             (State::Outside, e) => {
                 state = e; //TODO
                 Action::Enter
-            },
+            }
             // leaving side
             (State::Side(x), State::Side(y)) if x == y => {
                 state = State::Outside;
                 Action::Leave
-            },
+            }
             // entering into main body (while being on side)
             (State::Side(x), State::Side(y)) if x != y => {
                 state = State::Inside;
                 Action::Neither
-            },
+            }
             (State::Inside, State::Inside) => {
                 // leaving
                 state = State::Outside;
                 Action::Leave
-            },
+            }
             (State::Inside, State::Side(s)) => {
                 // starting to leave
                 state = State::Side(other(s));
                 Action::Neither
             }
-            _ => {panic!();}
+            _ => {
+                panic!();
+            }
         };
         match a {
             Action::Enter => {
@@ -193,9 +194,9 @@ fn solve(instr: Vec<Instruction>) -> isize {
     let changes = breakpoints(&segments, Axis::Vertical);
     let bars = bars(&segments, Axis::Horizontal);
     let mut acc = 0;
-    for (i,i1) in changes.iter().copied().tuple_windows() {
+    for (i, i1) in changes.iter().copied().tuple_windows() {
         acc += height(&bars, i); // at the edge
-        acc += height(&bars, i+1) * (i1 - i - 1); // between
+        acc += height(&bars, i + 1) * (i1 - i - 1); // between
     }
     acc += height(&bars, *changes.last().unwrap());
     acc
@@ -258,5 +259,4 @@ mod tests {
         assert_eq!(952408144115, solve(parse("inputs/18a", parse_line2)));
         assert_eq!(92556825427032, solve(parse("inputs/18b", parse_line2)));
     }
-
 }
