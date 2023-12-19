@@ -99,10 +99,21 @@ fn relevant(s: Segment, x: isize) -> bool {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Side {
-    Inside,
-    Outside,
     Left,
     Right,
+}
+fn other(s:Side) -> Side {
+    match s {
+        Side::Left => Side::Right,
+        Side::Right => Side::Left,
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum State {
+    Inside,
+    Outside,
+    Side(Side)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -112,58 +123,54 @@ enum Action {
     Neither,
 }
 
-fn edge(s: Segment, x: isize) -> Side {
+fn edge(s: Segment, x: isize) -> State {
     if relevant(s, x) {
         if x == s.start {
-            return Side::Left;
+            return State::Side(Side::Left);
         }
         if x == s.end {
-            return Side::Right;
+            return State::Side(Side::Right);
         }
-        return Side::Inside;
+        return State::Inside;
     }
-    return Side::Outside;
+    return State::Outside;
 }
 
 fn height(ss: &Vec<Segment>, x: isize) -> isize {
     let intersections = ss.iter().copied().filter(|&s| relevant(s, x)).sorted().map(|s| (edge(s, x), s.altitude));
     let mut acc = 0;
-    let mut state = Side::Outside;
+    let mut state = State::Outside;
     let mut entered = 0;
     for (edge, alt) in intersections {
         let a = match (state, edge) {
-            (_, Side::Outside) | (Side::Left, Side::Inside) | (Side::Right, Side::Inside) => {
+            (_, State::Outside) | (State::Side(_), State::Inside) => {
                 panic!();
             }
-            (Side::Outside, e) => {
+            (State::Outside, e) => {
                 state = e; //TODO
                 Action::Enter
-            }
+            },
             // leaving side
-            (Side::Left, Side::Left) | (Side::Right, Side::Right) => {
-                state = Side::Outside;
+            (State::Side(x), State::Side(y)) if x == y => {
+                state = State::Outside;
                 Action::Leave
-            }
+            },
             // entering into main body (while being on side)
-            (Side::Left, Side::Right) | (Side::Right, Side::Left) => {
-                state = Side::Inside;
+            (State::Side(x), State::Side(y)) if x != y => {
+                state = State::Inside;
                 Action::Neither
-            }
-            (Side::Inside, Side::Inside) => {
+            },
+            (State::Inside, State::Inside) => {
                 // leaving
-                state = Side::Outside;
+                state = State::Outside;
                 Action::Leave
-            }
-            (Side::Inside, Side::Left) => {
+            },
+            (State::Inside, State::Side(s)) => {
                 // starting to leave
-                state = Side::Right;
+                state = State::Side(other(s));
                 Action::Neither
             }
-            (Side::Inside, Side::Right) => {
-                // starting to leave
-                state = Side::Left;
-                Action::Neither
-            }
+            _ => {panic!();}
         };
         match a {
             Action::Enter => {
