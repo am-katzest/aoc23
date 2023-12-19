@@ -71,6 +71,7 @@ struct Segment {
     start: isize,
     end: isize,
 }
+
 fn relevant(s: Segment, x: isize) -> bool {
     x >= s.start && x <= s.end
 }
@@ -114,13 +115,14 @@ fn edge(s: Segment, x: isize) -> State {
     return State::Outside;
 }
 
-fn height(ss: &Vec<Segment>, x: isize) -> isize {
-    let intersections = ss.iter().copied().filter(|&s| relevant(s, x)).sorted().map(|s| (edge(s, x), s.altitude));
+fn height(segments: &Vec<Segment>, x: isize) -> isize {
     let mut acc = 0;
     let mut state = State::Outside;
     let mut entered = 0;
-    for (edge, alt) in intersections {
-        let a = match (state, edge) {
+    // moving up, through sections that are in this particular plane
+    for &segment in segments {
+        let a = match (state, edge(segment, x)) {
+            (_, State::Outside) => Action::Neither,
             (State::Outside, e) => {
                 state = e;
                 Action::Enter
@@ -129,7 +131,7 @@ fn height(ss: &Vec<Segment>, x: isize) -> isize {
                 state = State::Outside;
                 Action::Leave
             }
-            (State::Side(x), State::Side(y)) if x != y => {
+            (State::Side(_), State::Side(_)) => {
                 state = State::Inside;
                 Action::Neither
             }
@@ -138,20 +140,17 @@ fn height(ss: &Vec<Segment>, x: isize) -> isize {
                 Action::Leave
             }
             (State::Inside, State::Side(s)) => {
-                // starting to leave
                 state = State::Side(other(s));
                 Action::Neither
             }
-            _ => {
-                panic!();
-            }
+            (State::Side(_), State::Inside) => panic!(), // can't happen for geometry reasons
         };
         match a {
             Action::Enter => {
-                entered = alt;
+                entered = segment.altitude;
             }
             Action::Leave => {
-                acc += alt - entered + 1;
+                acc += segment.altitude - entered + 1;
             }
             Action::Neither => {}
         }
@@ -195,6 +194,7 @@ fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
             }
         })
         .filter_map(|x| x)
+        .sorted()
         .collect_vec()
 }
 
