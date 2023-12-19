@@ -152,10 +152,12 @@ fn part1((ws, ps): Data, initial: String) -> isize {
         .filter(|&p| accepted(&ws, p, initial.to_owned()))
         .fold(0, |acc, x| acc + sum(x))
 }
+
+// inclusive
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Range {
     min: isize,
-    max: isize
+    max: isize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -178,6 +180,31 @@ impl Index<Key> for PartRange {
     }
 }
 
+fn below(p: isize, r: Range) -> Option<Range> {
+    if r.min >= p {
+        None
+    } else {
+        Some(Range { max: r.max.min(p-1), ..r })
+    }
+}
+fn above(p: isize, r: Range) -> Option<Range> {
+    if r.max <= p {
+        None
+    } else {
+        Some(Range { min: r.min.max(p+1), ..r })
+    }
+}
+// (matching, notmatching)
+fn split(g: Guard, r: Range) -> (Option<Range>, Option<Range>) {
+    match g.op {
+        Op::Lesser => (below(g.value, r), above(g.value, r)),
+        _ => panic!(),
+    }
+}
+
+fn part2(ws: Workflows) -> isize {
+    3
+}
 
 fn main() {
     println!("part1: {}", part1(parse("inputs/19b"), String::from("in")));
@@ -218,5 +245,24 @@ mod tests {
             (String::from("px"), Workflow { instructions, default }),
             parse_workflow("px{a<2006:qkq,m>2090:A,rfg}")
         );
+    }
+    #[test]
+    fn splitting_test() {
+        let s = Range { min: 0, max: 10 };
+        assert_eq!(Some(Range { min: 3, max: 10 }), above(2, s));
+        assert_eq!(Some(Range { min: 0, max: 10 }), above(-5, s));
+        assert_eq!(Some(Range { min: 0, max: 10 }), above(-1, s));
+        assert_eq!(Some(Range { min: 1, max: 10 }), above(0, s));
+        assert_eq!(Some(Range { min: 9, max: 10 }), above(8, s));
+        assert_eq!(Some(Range { min: 10, max: 10 }), above(9, s));
+        assert_eq!(None, above(10, s));
+
+        assert_eq!(Some(Range { min: 0, max: 1 }), below(2, s));
+        assert_eq!(Some(Range { min: 0, max: 10 }), below(11, s));
+        assert_eq!(Some(Range { min: 0, max: 9 }), below(10, s));
+        assert_eq!(Some(Range { min: 0, max: 0 }), below(1, s));
+        assert_eq!(None, below(0, s));
+
+        
     }
 }
