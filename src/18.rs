@@ -115,11 +115,11 @@ fn edge(s: Segment, x: isize) -> State {
     return State::Outside;
 }
 
+// sums up height in one vertical line
 fn height(segments: &Vec<Segment>, x: isize) -> isize {
     let mut acc = 0;
     let mut state = State::Outside;
-    let mut entered = 0;
-    // moving up, through sections that are in this particular plane
+    let mut alt_entered = 0;
     for &segment in segments {
         let a = match (state, edge(segment, x)) {
             (_, State::Outside) => Action::Neither,
@@ -147,10 +147,10 @@ fn height(segments: &Vec<Segment>, x: isize) -> isize {
         };
         match a {
             Action::Enter => {
-                entered = segment.altitude;
+                alt_entered = segment.altitude;
             }
             Action::Leave => {
-                acc += segment.altitude - entered + 1;
+                acc += segment.altitude - alt_entered + 1;
             }
             Action::Neither => {}
         }
@@ -173,10 +173,12 @@ fn solve(instr: Vec<Instruction>) -> isize {
     acc
 }
 
+// returns places where segments start or end
 fn breakpoints(segments: &Vec<Segment>) -> Vec<isize> {
     segments.iter().flat_map(|s| vec![s.start, s.end]).sorted().unique().collect_vec()
 }
 
+// returns horizontal segments, sorted ascending by altitute
 fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
     instr
         .into_iter()
