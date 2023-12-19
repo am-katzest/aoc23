@@ -231,8 +231,8 @@ fn segmentize(instr: Vec<Instruction>) -> Vec<Segment> {
 }
 
 fn main() {
-    println!("part 1: {:?}", solve(parse("inputs/18a", parse_line)));
-    //    println!("part 2: {:?}", solve("inputs/18b"));
+    println!("part 1: {:?}", solve(parse("inputs/18b", parse_line)));
+    println!("part 2: {:?}", solve(parse("inputs/18b", parse_line2)));
 }
 
 #[cfg(test)]
