@@ -184,21 +184,22 @@ fn below(p: isize, r: Range) -> Option<Range> {
     if r.min >= p {
         None
     } else {
-        Some(Range { max: r.max.min(p-1), ..r })
+        Some(Range { max: r.max.min(p - 1), ..r })
     }
 }
 fn above(p: isize, r: Range) -> Option<Range> {
     if r.max <= p {
         None
     } else {
-        Some(Range { min: r.min.max(p+1), ..r })
+        Some(Range { min: r.min.max(p + 1), ..r })
     }
 }
+
 // (matching, notmatching)
 fn split(g: Guard, r: Range) -> (Option<Range>, Option<Range>) {
     match g.op {
-        Op::Lesser => (below(g.value, r), above(g.value, r)),
-        _ => panic!(),
+        Op::Lesser => (below(g.value, r), above(g.value - 1, r)),
+        Op::Greater => (above(g.value, r), below(g.value + 1, r)),
     }
 }
 
@@ -249,20 +250,21 @@ mod tests {
     #[test]
     fn splitting_test() {
         let s = Range { min: 0, max: 10 };
-        assert_eq!(Some(Range { min: 3, max: 10 }), above(2, s));
-        assert_eq!(Some(Range { min: 0, max: 10 }), above(-5, s));
-        assert_eq!(Some(Range { min: 0, max: 10 }), above(-1, s));
-        assert_eq!(Some(Range { min: 1, max: 10 }), above(0, s));
-        assert_eq!(Some(Range { min: 9, max: 10 }), above(8, s));
-        assert_eq!(Some(Range { min: 10, max: 10 }), above(9, s));
+        let mkr = |min, max| Some(Range { min, max });
+        assert_eq!(mkr(3, 10), above(2, s));
+        assert_eq!(mkr(0, 10), above(-5, s));
+        assert_eq!(mkr(0, 10), above(-1, s));
+        assert_eq!(mkr(1, 10), above(0, s));
+        assert_eq!(mkr(9, 10), above(8, s));
+        assert_eq!(mkr(10, 10), above(9, s));
         assert_eq!(None, above(10, s));
 
-        assert_eq!(Some(Range { min: 0, max: 1 }), below(2, s));
-        assert_eq!(Some(Range { min: 0, max: 10 }), below(11, s));
-        assert_eq!(Some(Range { min: 0, max: 9 }), below(10, s));
-        assert_eq!(Some(Range { min: 0, max: 0 }), below(1, s));
+        assert_eq!(mkr(0, 1), below(2, s));
+        assert_eq!(mkr(0, 10), below(11, s));
+        assert_eq!(mkr(0, 9), below(10, s));
+        assert_eq!(mkr(0, 0), below(1, s));
         assert_eq!(None, below(0, s));
-
-        
+        let b4 = Guard { op: Op::Lesser, value: 4, key: Key::X };
+        assert_eq!((mkr(0, 3), mkr(4, 10)), split(b4, s));
     }
 }
