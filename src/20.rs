@@ -201,6 +201,24 @@ fn part1(n: Network) -> usize {
     l * h
 }
 
+
+fn part2(n: Network) -> usize {
+    let mut i = 0;
+    let mut s = n.clone();
+    loop {
+        i += 1;
+        let r = button(s.clone());
+        s = r.0;
+        if i%1000 == 0 {
+            println!("{i} {:?}", r.2);
+        }
+        if r.2.0 != 0 {
+            println!("{i} {:?}", r.2);
+            return i;
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Machine {
     module: Module,
@@ -208,7 +226,6 @@ struct Machine {
 }
 
 fn main() {
-    println!("part1: {:?}", part1(parse("inputs/20a")));
-    println!("part1: {:?}", part1(parse("inputs/20c")));
-    println!("part1: {:?}", part1(parse("inputs/20b")));
+    //println!("part1: {:?}", part1(parse("inputs/20b")));
+    //println!("part2: {:?}", part2(parse("inputs/20b")));
 }
