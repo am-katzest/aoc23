@@ -70,8 +70,11 @@ fn apply(m: Module, source: String, p: Pulse) -> (Module, Option<Pulse>) {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-enum ModuleType { // just for parsing
-    Broadcast, FlipFlop, Conj
+enum ModuleType {
+    // just for parsing
+    Broadcast,
+    FlipFlop,
+    Conj,
 }
 
 fn pre_parse_module(line: &str) -> (ModuleType, String, Vec<String>) {
@@ -89,7 +92,25 @@ fn pre_parse_module(line: &str) -> (ModuleType, String, Vec<String>) {
     (kind, first, tmp.collect_vec())
 }
 
-fn parse(f: &str) {
+fn crate_module(t: ModuleType, inputs: Vec<String>) -> Module {
+    match t {
+        ModuleType::Broadcast => Module::Broadcast,
+        ModuleType::FlipFlop => Module::FlipFlop(FlipFlopState::Off),
+        ModuleType::Conj => {
+            let state = inputs.into_iter().map(|x| (x, Pulse::Low)).collect_vec();
+            Module::Conj(state)
+        }
+    }
+}
+
+fn create_machine(t: ModuleType, inputs: Vec<String>, outputs: Vec<String>) -> Machine {
+    Machine {
+        targets: outputs,
+        kind: crate_module(t, inputs),
+    }
+}
+
+fn parse(f: &str) -> HashMap<String, Machine> {
     let content = read_to_string(f).unwrap();
     let modules = content.lines().map(pre_parse_module).collect_vec();
 
@@ -108,6 +129,17 @@ fn parse(f: &str) {
     }
     println!("{:?}", modules);
     println!("{:?}", inputs);
+    modules
+        .clone()
+        .into_iter()
+        .map(|(kind, name, outputs)| {
+            (
+                //key, value
+                name.to_owned(),
+                create_machine(kind, inputs.get(&name).unwrap_or(&vec![]).to_owned(), outputs),
+            )
+        })
+        .collect()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -117,5 +149,5 @@ struct Machine {
 }
 
 fn main() {
-    parse("inputs/20a")
+    println!("part1: {:?}", parse("inputs/20a"));
 }
