@@ -106,16 +106,43 @@ fn crate_module(t: ModuleType, inputs: Vec<String>) -> Module {
 fn create_machine(t: ModuleType, inputs: Vec<String>, outputs: Vec<String>) -> Machine {
     Machine {
         targets: outputs,
-        kind: crate_module(t, inputs),
+        module: crate_module(t, inputs),
     }
 }
 
-fn parse(f: &str) -> HashMap<String, Machine> {
+type Network = HashMap<String, Machine> ;
+
+fn button(n: Network) -> Network {
+    let mut queue: std::collections::VecDeque<(String, String, Pulse)> =  std::collections::VecDeque::new();
+    queue.push_front((String::from("button"), String::from("broadcaster"), Pulse::Low));
+    let mut n = n.clone();
+    loop {
+        match queue.pop_back() {
+            None => break,
+            Some((source, current, pulse)) => {
+                let mut machine = n.get_mut(&current).unwrap();
+                println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
+                let (module, response) = apply(machine.module.to_owned(), source, pulse);
+                machine.module = module; // update
+                match response {
+                    Some(pulse) => {
+                        for target in machine.targets.clone() {
+                            queue.push_front((current.to_owned(), target, pulse));
+                        }
+                    },
+                    None => {},
+                }
+            }
+        }
+    }
+    n
+}
+
+
+fn parse(f: &str) -> Network {
     let content = read_to_string(f).unwrap();
     let modules = content.lines().map(pre_parse_module).collect_vec();
     let inputs = collect_inputs(&modules);
-    println!("{:?}", modules);
-    println!("{:?}", inputs);
     modules
         .clone()
         .into_iter()
@@ -146,12 +173,16 @@ fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<S
     inputs
 }
 
+fn part1(n:Network) {
+    button(n);
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Machine {
-    kind: Module,
+    module: Module,
     targets: Vec<String>,
 }
 
 fn main() {
-    println!("part1: {:?}", parse("inputs/20a"));
+    println!("part1: {:?}", part1(parse("inputs/20a")));
 }
