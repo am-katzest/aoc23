@@ -112,23 +112,32 @@ fn create_machine(t: ModuleType, inputs: Vec<String>, outputs: Vec<String>) -> M
 
 type Network = HashMap<String, Machine>;
 
-fn button(n: Network) -> (Network, (usize, usize)) {
+type Counter = (usize, usize);
+fn inc_counter(c: &mut Counter, s: Pulse) {
+    match s {
+        Pulse::High => c.1 += 1,
+        Pulse::Low => c.0 += 1,
+    }
+}
+
+fn button(n: Network) -> (Network, Counter, Counter) {
     let mut queue: std::collections::VecDeque<(String, String, Pulse)> = std::collections::VecDeque::new();
-    let mut high = 0;
-    let mut low = 0;
+    let mut counter = (0, 0);
+    let mut rxcounter = (0, 0);
     queue.push_front((String::from("button"), String::from("broadcaster"), Pulse::Low));
     let mut n = n.clone();
     loop {
         match queue.pop_back() {
             None => break,
             Some((source, current, pulse)) => {
-                match pulse {
-                    Pulse::High => high += 1,
-                    Pulse::Low => low += 1,
-                }
+                inc_counter(&mut counter, pulse);
                 //println!("{source} --{:?}--> {current}", pulse);
                 match n.get_mut(&current) {
-                    None => {} // nonexistent output
+                    None => {
+                        if current == "rx" {
+                            inc_counter(&mut rxcounter, pulse);
+                        }
+                    } // nonexistent output
                     Some(mut machine) => {
                         //println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
                         let (module, response) = apply(machine.module.to_owned(), source, pulse);
@@ -146,7 +155,7 @@ fn button(n: Network) -> (Network, (usize, usize)) {
             }
         }
     }
-    (n, (low, high))
+    (n, counter, rxcounter)
 }
 
 fn parse(f: &str) -> Network {
@@ -184,9 +193,9 @@ fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<S
 }
 
 fn part1(n: Network) -> usize {
-    let (l, h) = std::iter::successors(Some((n, (0, 0))), move |(n, _)| Some(button(n.clone())))
+    let (l, h) = std::iter::successors(Some((n, (0, 0), (0, 0))), move |(n, _, _)| Some(button(n.clone())))
         .take(1001)
-        .map(|(_, c)| c)
+        .map(|(_, c, _)| c)
         .reduce(|(al, ah), (bl, bh)| (al + bl, ah + bh))
         .unwrap();
     l * h
