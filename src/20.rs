@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fs::read_to_string};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::read_to_string,
+};
 
 use itertools::Itertools;
 
@@ -175,6 +178,25 @@ fn parse(f: &str) -> Network {
         .collect()
 }
 
+fn collect_influence(name: String, network: &Network) -> HashSet<String> {
+    let mut acc: HashSet<String> = HashSet::new();
+    fn step(network: &Network, acc: &mut HashSet<String>, current: String) {
+        if acc.insert(current.to_owned()) {
+            match network.get(&current) {
+                None => {}
+                Some(m) => {
+                    for target in m.targets.to_owned() {
+                        step(network, acc, target);
+                    }
+                }
+            }
+        }
+    }
+    step(network, &mut acc, name.to_owned());
+    acc.remove(&name); //TODO is this needed
+    acc
+}
+
 fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<String, Vec<String>> {
     let mut inputs: HashMap<String, Vec<String>> = HashMap::new();
     for (_, sender, outputs) in modules.clone() {
@@ -201,7 +223,6 @@ fn part1(n: Network) -> usize {
     l * h
 }
 
-
 fn part2(n: Network) -> usize {
     let mut i = 0;
     let mut s = n.clone();
@@ -209,10 +230,10 @@ fn part2(n: Network) -> usize {
         i += 1;
         let r = button(s.clone());
         s = r.0;
-        if i%1000 == 0 {
+        if i % 1000 == 0 {
             println!("{i} {:?}", r.2);
         }
-        if r.2.0 != 0 {
+        if r.2 .0 != 0 {
             println!("{i} {:?}", r.2);
             return i;
         }
@@ -226,6 +247,42 @@ struct Machine {
 }
 
 fn main() {
+    let network = parse("inputs/20b");
+    let impacts = calc_total_impact(network.clone());
+    let merger = find_merger(&impacts);
+    let last_ones = match network.get(&merger).unwrap().module.to_owned() {
+        Module::Conj(x) => x.into_iter().map(|(x, _)| x).collect_vec(),
+        _ => panic!(),
+    };
+    println!("{:?}", last_ones);
+    let subgraphs: HashMap<String, Vec<String>> = last_ones
+        .into_iter()
+        .map(|i| {
+            let subgraph_content = impacts
+                .iter()
+                .filter(|(_, y)| y.contains(&i.to_owned()))
+                .map(|(x, _)| x.to_owned())
+                .collect_vec();
+            (i, subgraph_content)
+        })
+        .collect();
     //println!("part1: {:?}", part1(parse("inputs/20b")));
     //println!("part2: {:?}", part2(parse("inputs/20b")));
+}
+
+fn find_merger(impacts: &HashMap<String, HashSet<String>>) -> String {
+    for (n, s) in impacts {
+        if s.len() == 1 {
+            return n.to_owned();
+        }
+    }
+    panic!();
+}
+
+fn calc_total_impact(network: HashMap<String, Machine>) -> HashMap<String, HashSet<String>> {
+    let mut impact: HashMap<String, HashSet<String>> = HashMap::new();
+    for (n, _) in network.to_owned() {
+        impact.insert(n.to_owned(), collect_influence(n.to_owned(), &network));
+    }
+    impact
 }
