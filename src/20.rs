@@ -123,7 +123,7 @@ fn inc_counter(c: &mut Counter, s: Pulse) {
     }
 }
 
-fn button(n: Network, observed:&mut HashMap<(String, String), isize>) -> (Network, Counter) {
+fn button(n: Network, observed: &mut HashMap<(String, String), isize>) -> (Network, Counter) {
     let mut queue: std::collections::VecDeque<(String, String, Pulse)> = std::collections::VecDeque::new();
     let mut counter = (0, 0);
     queue.push_front((String::from("button"), String::from("broadcaster"), Pulse::Low));
@@ -134,9 +134,17 @@ fn button(n: Network, observed:&mut HashMap<(String, String), isize>) -> (Networ
             Some((source, current, pulse)) => {
                 inc_counter(&mut counter, pulse);
                 //println!("{source} --{:?}--> {current}", pulse);
+
+                match observed.get_mut(&(source.to_owned(), current.to_owned())) {
+                    Some(x) =>  {
+                        if pulse == Pulse::High {
+                            *x = (*x)+1;
+                        }
+                    },
+                    None => {},
+                }
                 match n.get_mut(&current) {
-                    None => {
-                    } // nonexistent output
+                    None => {} // nonexistent output
                     Some(mut machine) => {
                         //println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
                         let (module, response) = apply(machine.module.to_owned(), source, pulse);
@@ -227,12 +235,12 @@ struct Machine {
 }
 
 fn main() {
-    part3(parse("inputs/20b"));
+
     //println!("part1: {:?}", part1(parse("inputs/20b")));
-    //println!("part2: {:?}", part2(parse("inputs/20b")));
+    println!("part2: {:?}", part3(parse("inputs/20b")));
 }
 
-fn part3(network: Network) {
+fn part3(network: Network) -> usize {
     let impacts = calc_total_impact(network.clone());
     let merger = find_merger(&impacts);
     let last_ones = match network.get(&merger).unwrap().module.to_owned() {
@@ -240,27 +248,23 @@ fn part3(network: Network) {
         _ => panic!(),
     };
     println!("{:?}", last_ones);
-    let subgraphs = find_subgraphs(last_ones, impacts);
+    let subgraphs = find_subgraphs(last_ones.to_owned(), impacts);
+    let obs: HashMap<(String, String), isize> = last_ones.to_owned().iter().map(|x| ((x.to_owned(), merger.to_owned()), 0)).collect();
     subgraphs;
+    let mut cycles:HashMap<String, usize> = HashMap::new();
     let mut s = network.clone();
     let mut i = 0;
     loop {
-        i = i +1;
-        s = button(s.to_owned()).0;
-        let important_bit = match s.get(&merger).unwrap().clone().module
-            {
-                Module::Conj(x) => x,
-                _ => panic!(),
-            };
-
-        // for (name, last) in important_bit {
-        //     if last == Pulse::High {
-        //         //println!("{name} {i}", );
-        //     }
-        // }
-        println!("{:?}",important_bit );
-        if i== 100000{
-        break
+        i = i + 1;
+        let mut o = obs.clone();
+        s = button(s.to_owned(), &mut o).0;
+        for ((key, _), val) in o {
+            if val > 0 {
+                cycles.insert(key, i);
+                if cycles.len() == last_ones.len() {
+                    return cycles.iter().fold(1, |acc, (_, x)| acc * x)
+                }
+            }
         }
     }
 }
