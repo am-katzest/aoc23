@@ -113,20 +113,7 @@ fn create_machine(t: ModuleType, inputs: Vec<String>, outputs: Vec<String>) -> M
 fn parse(f: &str) -> HashMap<String, Machine> {
     let content = read_to_string(f).unwrap();
     let modules = content.lines().map(pre_parse_module).collect_vec();
-
-    let mut inputs: HashMap<String, Vec<String>> = HashMap::new();
-    for (_, sender, outputs) in modules.clone() {
-        for o in outputs {
-            match inputs.get_mut(&o) {
-                Some(previous) => {
-                    (*previous).push(sender.clone());
-                }
-                None => {
-                    inputs.insert(o, vec![sender.clone()]);
-                }
-            }
-        }
-    }
+    let inputs = collect_inputs(&modules);
     println!("{:?}", modules);
     println!("{:?}", inputs);
     modules
@@ -140,6 +127,23 @@ fn parse(f: &str) -> HashMap<String, Machine> {
             )
         })
         .collect()
+}
+
+fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<String, Vec<String>> {
+    let mut inputs: HashMap<String, Vec<String>> = HashMap::new();
+    for (_, sender, outputs) in modules.clone() {
+        for o in outputs {
+            match inputs.get_mut(&o) {
+                Some(previous) => {
+                    (*previous).push(sender.clone());
+                }
+                None => {
+                    inputs.insert(o, vec![sender.clone()]);
+                }
+            }
+        }
+    }
+    inputs
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
