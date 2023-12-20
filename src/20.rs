@@ -123,10 +123,9 @@ fn inc_counter(c: &mut Counter, s: Pulse) {
     }
 }
 
-fn button(n: Network) -> (Network, Counter, Counter) {
+fn button(n: Network, observed:&mut HashMap<(String, String), isize>) -> (Network, Counter) {
     let mut queue: std::collections::VecDeque<(String, String, Pulse)> = std::collections::VecDeque::new();
     let mut counter = (0, 0);
-    let mut rxcounter = (0, 0);
     queue.push_front((String::from("button"), String::from("broadcaster"), Pulse::Low));
     let mut n = n.clone();
     loop {
@@ -137,9 +136,6 @@ fn button(n: Network) -> (Network, Counter, Counter) {
                 //println!("{source} --{:?}--> {current}", pulse);
                 match n.get_mut(&current) {
                     None => {
-                        if current == "rx" {
-                            inc_counter(&mut rxcounter, pulse);
-                        }
                     } // nonexistent output
                     Some(mut machine) => {
                         //println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
@@ -158,7 +154,7 @@ fn button(n: Network) -> (Network, Counter, Counter) {
             }
         }
     }
-    (n, counter, rxcounter)
+    (n, counter)
 }
 
 fn parse(f: &str) -> Network {
@@ -215,29 +211,13 @@ fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<S
 }
 
 fn part1(n: Network) -> usize {
-    let (l, h) = std::iter::successors(Some((n, (0, 0), (0, 0))), move |(n, _, _)| Some(button(n.clone())))
+    let mut dummy: HashMap<(String, String), isize> = HashMap::new();
+    let (l, h) = std::iter::successors(Some((n, (0, 0))), move |(n, _)| Some(button(n.clone(), &mut dummy)))
         .take(1001)
-        .map(|(_, c, _)| c)
+        .map(|(_, c)| c)
         .reduce(|(al, ah), (bl, bh)| (al + bl, ah + bh))
         .unwrap();
     l * h
-}
-
-fn part2(n: Network) -> usize {
-    let mut i = 0;
-    let mut s = n.clone();
-    loop {
-        i += 1;
-        let r = button(s.clone());
-        s = r.0;
-        if i % 1000 == 0 {
-            println!("{i} {:?}", r.2);
-        }
-        if r.2 .0 != 0 {
-            println!("{i} {:?}", r.2);
-            return i;
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -272,8 +252,16 @@ fn part3(network: Network) {
                 Module::Conj(x) => x,
                 _ => panic!(),
             };
+
+        // for (name, last) in important_bit {
+        //     if last == Pulse::High {
+        //         //println!("{name} {i}", );
+        //     }
+        // }
         println!("{:?}",important_bit );
+        if i== 100000{
         break
+        }
     }
 }
 
