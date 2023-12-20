@@ -133,20 +133,17 @@ fn button(n: Network, observed: &mut HashMap<(String, String), isize>) -> (Netwo
             None => break,
             Some((source, current, pulse)) => {
                 inc_counter(&mut counter, pulse);
-                //println!("{source} --{:?}--> {current}", pulse);
-
                 match observed.get_mut(&(source.to_owned(), current.to_owned())) {
-                    Some(x) =>  {
+                    Some(x) => {
                         if pulse == Pulse::High {
-                            *x = (*x)+1;
+                            *x = (*x) + 1;
                         }
-                    },
-                    None => {},
+                    }
+                    None => {}
                 }
                 match n.get_mut(&current) {
                     None => {} // nonexistent output
                     Some(mut machine) => {
-                        //println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
                         let (module, response) = apply(machine.module.to_owned(), source, pulse);
                         machine.module = module; // update
                         match response {
@@ -235,23 +232,19 @@ struct Machine {
 }
 
 fn main() {
-
-    //println!("part1: {:?}", part1(parse("inputs/20b")));
-    println!("part2: {:?}", part3(parse("inputs/20b")));
+    println!("part1: {:?}", part1(parse("inputs/20b")));
+    println!("part2: {:?}", part2(parse("inputs/20b")));
 }
 
-fn part3(network: Network) -> usize {
+fn part2(network: Network) -> usize {
     let impacts = calc_total_impact(network.clone());
     let merger = find_merger(&impacts);
     let last_ones = match network.get(&merger).unwrap().module.to_owned() {
         Module::Conj(x) => x.into_iter().map(|(x, _)| x).collect_vec(),
         _ => panic!(),
     };
-    println!("{:?}", last_ones);
-    let subgraphs = find_subgraphs(last_ones.to_owned(), impacts);
     let obs: HashMap<(String, String), isize> = last_ones.to_owned().iter().map(|x| ((x.to_owned(), merger.to_owned()), 0)).collect();
-    subgraphs;
-    let mut cycles:HashMap<String, usize> = HashMap::new();
+    let mut cycles: HashMap<String, usize> = HashMap::new();
     let mut s = network.clone();
     let mut i = 0;
     loop {
@@ -262,26 +255,11 @@ fn part3(network: Network) -> usize {
             if val > 0 {
                 cycles.insert(key, i);
                 if cycles.len() == last_ones.len() {
-                    return cycles.iter().fold(1, |acc, (_, x)| acc * x)
+                    return cycles.iter().fold(1, |acc, (_, x)| acc * x);
                 }
             }
         }
     }
-}
-
-fn find_subgraphs(last_ones: Vec<String>, impacts: HashMap<String, HashSet<String>>) -> HashMap<String, Vec<String>> {
-    let subgraphs: HashMap<String, Vec<String>> = last_ones
-        .into_iter()
-        .map(|i| {
-            let subgraph_content = impacts
-                .iter()
-                .filter(|(_, y)| y.contains(&i.to_owned()))
-                .map(|(x, _)| x.to_owned())
-                .collect_vec();
-            (i, subgraph_content)
-        })
-        .collect();
-    subgraphs
 }
 
 fn find_merger(impacts: &HashMap<String, HashSet<String>>) -> String {
