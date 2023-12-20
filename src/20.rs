@@ -247,7 +247,12 @@ struct Machine {
 }
 
 fn main() {
-    let network = parse("inputs/20b");
+    part3(parse("inputs/20b"));
+    //println!("part1: {:?}", part1(parse("inputs/20b")));
+    //println!("part2: {:?}", part2(parse("inputs/20b")));
+}
+
+fn part3(network: Network) {
     let impacts = calc_total_impact(network.clone());
     let merger = find_merger(&impacts);
     let last_ones = match network.get(&merger).unwrap().module.to_owned() {
@@ -266,8 +271,6 @@ fn main() {
             (i, subgraph_content)
         })
         .collect();
-    //println!("part1: {:?}", part1(parse("inputs/20b")));
-    //println!("part2: {:?}", part2(parse("inputs/20b")));
 }
 
 fn find_merger(impacts: &HashMap<String, HashSet<String>>) -> String {
