@@ -260,6 +260,24 @@ fn part3(network: Network) {
         _ => panic!(),
     };
     println!("{:?}", last_ones);
+    let subgraphs = find_subgraphs(last_ones, impacts);
+    subgraphs;
+    let mut s = network.clone();
+    let mut i = 0;
+    loop {
+        i = i +1;
+        s = button(s.to_owned()).0;
+        let important_bit = match s.get(&merger).unwrap().clone().module
+            {
+                Module::Conj(x) => x,
+                _ => panic!(),
+            };
+        println!("{:?}",important_bit );
+        break
+    }
+}
+
+fn find_subgraphs(last_ones: Vec<String>, impacts: HashMap<String, HashSet<String>>) -> HashMap<String, Vec<String>> {
     let subgraphs: HashMap<String, Vec<String>> = last_ones
         .into_iter()
         .map(|i| {
@@ -271,6 +289,7 @@ fn part3(network: Network) {
             (i, subgraph_content)
         })
         .collect();
+    subgraphs
 }
 
 fn find_merger(impacts: &HashMap<String, HashSet<String>>) -> String {
