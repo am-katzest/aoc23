@@ -110,34 +110,44 @@ fn create_machine(t: ModuleType, inputs: Vec<String>, outputs: Vec<String>) -> M
     }
 }
 
-type Network = HashMap<String, Machine> ;
+type Network = HashMap<String, Machine>;
 
-fn button(n: Network) -> Network {
-    let mut queue: std::collections::VecDeque<(String, String, Pulse)> =  std::collections::VecDeque::new();
+fn button(n: Network) -> (Network, (usize, usize)) {
+    let mut queue: std::collections::VecDeque<(String, String, Pulse)> = std::collections::VecDeque::new();
+    let mut high = 0;
+    let mut low = 0;
     queue.push_front((String::from("button"), String::from("broadcaster"), Pulse::Low));
     let mut n = n.clone();
     loop {
         match queue.pop_back() {
             None => break,
             Some((source, current, pulse)) => {
-                let mut machine = n.get_mut(&current).unwrap();
-                println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
-                let (module, response) = apply(machine.module.to_owned(), source, pulse);
-                machine.module = module; // update
-                match response {
-                    Some(pulse) => {
-                        for target in machine.targets.clone() {
-                            queue.push_front((current.to_owned(), target, pulse));
+                match pulse {
+                    Pulse::High => high += 1,
+                    Pulse::Low => low += 1,
+                }
+                //println!("{source} --{:?}--> {current}", pulse);
+                match n.get_mut(&current) {
+                    None => {} // nonexistent output
+                    Some(mut machine) => {
+                        //println!("{source} --{:?}--> {current} state: {:?}", pulse, machine);
+                        let (module, response) = apply(machine.module.to_owned(), source, pulse);
+                        machine.module = module; // update
+                        match response {
+                            Some(pulse) => {
+                                for target in machine.targets.clone() {
+                                    queue.push_front((current.to_owned(), target, pulse));
+                                }
+                            }
+                            None => {}
                         }
-                    },
-                    None => {},
+                    }
                 }
             }
         }
     }
-    n
+    (n, (low, high))
 }
-
 
 fn parse(f: &str) -> Network {
     let content = read_to_string(f).unwrap();
@@ -173,8 +183,13 @@ fn collect_inputs(modules: &Vec<(ModuleType, String, Vec<String>)>) -> HashMap<S
     inputs
 }
 
-fn part1(n:Network) {
-    button(n);
+fn part1(n: Network) -> usize {
+    let (l, h) = std::iter::successors(Some((n, (0, 0))), move |(n, _)| Some(button(n.clone())))
+        .take(1001)
+        .map(|(_, c)| c)
+        .reduce(|(al, ah), (bl, bh)| (al + bl, ah + bh))
+        .unwrap();
+    l * h
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -185,4 +200,6 @@ struct Machine {
 
 fn main() {
     println!("part1: {:?}", part1(parse("inputs/20a")));
+    println!("part1: {:?}", part1(parse("inputs/20c")));
+    println!("part1: {:?}", part1(parse("inputs/20b")));
 }
