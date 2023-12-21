@@ -97,19 +97,19 @@ fn recursive_thing(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Vi
     for dir in DIRECTIONS {
         let t1 = t + 1;
         if t1 > max {
-            return;
+            continue;
         }
 
         let coord1 = step(*dir, coord);
         if m[coord1] == Tile::Blocked {
-            return;
+            continue;
         }
 
         let k = (coord1, mod2(t1));
         match visited.get_mut(&k) {
             // we are worse then previous one
             Some(previous) if *previous > t1 => {
-                //return;
+                continue
             }
 
             _ => {
@@ -146,7 +146,10 @@ fn part1(m: Map, age: usize) -> usize {
 
 fn main() {
     println!("part 1: {:?}", part1(parse("inputs/21a"), 1));
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 6));
+    println!("part 1: {:?}", part1(parse("inputs/21a"), 2));
+    println!("part 1: {:?}", part1(parse("inputs/21a"), 3));
+    println!("part 1: {:?}", part1(parse("inputs/21a"), 4));
+    println!("part 1: {:?}", part1(parse("inputs/21a"), 5));
     //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
 }
 
