@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs::read_to_string;
 use std::ops::{Index, IndexMut};
 
@@ -93,7 +93,9 @@ fn mod2(x: usize) -> Mod2 {
     }
 }
 type Visited = HashMap<(Coord, Mod2), usize>;
-fn recursive_thing(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Visited) {
+type Queue =  VecDeque<(Coord, usize)>;
+
+fn add_children(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Visited, queue: &mut Queue) {
     for dir in DIRECTIONS {
         let t1 = t + 1;
         if t1 > max {
@@ -116,14 +118,27 @@ fn recursive_thing(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Vi
                 visited.insert(k, t1);
             }
         }
-        recursive_thing(m, max, coord1, t1, visited);
+        queue.push_back((coord1, t1));
+        ////add_children(m, max, coord1, t1, visited);
     }
 }
 
 fn part1(m: Map, age: usize) -> usize {
     println!("{:?}", m.start);
     let mut visited: Visited = HashMap::new();
-    recursive_thing(&m, age, m.start, 0, &mut visited);
+    let mut queue: Queue = VecDeque::new();
+    queue.push_back((m.start, 0));
+    //
+    loop {
+        match queue.pop_front() {
+            None => {break},
+            Some((c, a)) => {
+                add_children(&m, age, c, a, &mut visited, &mut queue);
+            }
+        }
+    }
+
+    //
     let mut result = m.clone();
     for ((coord, m), _) in visited {
         if m == mod2(age) {
