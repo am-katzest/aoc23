@@ -20,12 +20,14 @@ enum Dir {
 
 type Coord = (usize, usize);
 
-fn step(d: Dir, (x, y): Coord) -> Coord {
+fn step(d: Dir, (x, y): Coord, m: &Map) -> Option<Coord> {
+    let (mx, my) = m.size;
     match d {
-        Dir::Left => (x - 1, y),
-        Dir::Right => (x + 1, y),
-        Dir::Down => (x, y + 1),
-        Dir::Up => (x, y - 1),
+        Dir::Left if x > 0 => Some((x - 1, y)),
+        Dir::Right if x < (mx - 1) => Some((x + 1, y)),
+        Dir::Down if y < (my - 1) => Some((x, y + 1)),
+        Dir::Up if y > 0 => Some((x, y - 1)),
+        _ => None,
     }
 }
 
@@ -34,6 +36,7 @@ fn step(d: Dir, (x, y): Coord) -> Coord {
 struct Map {
     start: Coord,
     tiles: Vec<Vec<Tile>>,
+    size: Coord,
 }
 
 impl Index<Coord> for Map {
@@ -75,7 +78,8 @@ fn parse(f: &str) -> Map {
                 .collect_vec()
         })
         .collect_vec();
-    Map { tiles, start }
+    let size = (tiles[0].len(), tiles.len());
+    Map { tiles, start, size }
 }
 
 static DIRECTIONS: &[Dir] = &[Dir::Left, Dir::Right, Dir::Up, Dir::Down];
@@ -93,34 +97,39 @@ fn mod2(x: usize) -> Mod2 {
     }
 }
 type Visited = HashMap<(Coord, Mod2), usize>;
-type Queue =  VecDeque<(Coord, usize)>;
+type Queue = VecDeque<(Coord, usize)>;
+type Walker = (Coord, usize);
+
+fn add_child(m: &Map, max: usize, (coord, t): Walker, visited: &mut Visited, queue: &mut Queue, dir: Dir) {
+    let t1 = t + 1;
+    if t1 > max {
+        return;
+    }
+    let coord1 = match step(dir, coord, m) {
+        None => return,
+        Some(x) => x,
+    };
+    if m[coord1] == Tile::Blocked {
+        return;
+    }
+
+    let k = (coord1, mod2(t1));
+
+    match visited.get_mut(&k) {
+        // we are worse then previous one
+        Some(previous) if *previous >= t1 => {
+            //println!("found previous",);
+        }
+        _ => {
+            visited.insert(k, t1);
+            queue.push_back((coord1, t1));
+        }
+    }
+}
 
 fn add_children(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Visited, queue: &mut Queue) {
-    // TODO refactor create_child out
     for dir in DIRECTIONS {
-        let t1 = t + 1;
-        if t1 > max {
-            continue;
-        }
-
-        let coord1 = step(*dir, coord);
-        if m[coord1] == Tile::Blocked {
-            continue;
-        }
-
-        let k = (coord1, mod2(t1));
-        match visited.get_mut(&k) {
-            // we are worse then previous one
-            Some(previous) if *previous > t1 => {
-                continue
-            }
-
-            _ => {
-                visited.insert(k, t1);
-            }
-        }
-        queue.push_back((coord1, t1));
-        ////add_children(m, max, coord1, t1, visited);
+        add_child(m, max, (coord, t), visited, queue, *dir);
     }
 }
 
@@ -132,7 +141,7 @@ fn part1(m: Map, age: usize) -> usize {
     //
     loop {
         match queue.pop_front() {
-            None => {break},
+            None => break,
             Some((c, a)) => {
                 add_children(&m, age, c, a, &mut visited, &mut queue);
             }
@@ -151,16 +160,20 @@ fn part1(m: Map, age: usize) -> usize {
             match i {
                 Tile::Blocked => print!("#"),
                 Tile::Ground => print!("."),
-                Tile::Reachable => {res += 1;print!("O")},
+                Tile::Reachable => {
+                    res += 1;
+                    print!("O")
+                }
             }
         }
-        println!("", );
+        println!("",);
     }
     res
 }
 
 fn main() {
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 6));
+    //println!("part 1: {:?}", part1(parse("inputs/21a"), 6));
+    println!("part 1: {:?}", part1(parse("inputs/21b"), 64));
     //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
 }
 
@@ -168,7 +181,9 @@ fn main() {
 mod tests {
     #[test]
     fn part1_test() {
+        assert_eq!(2, part1(parse("inputs/21a"), 1));
         assert_eq!(16, part1(parse("inputs/21a"), 6));
+        assert_eq!(18, part1(parse("inputs/21a"), 8));
     }
     use crate::*;
 }
