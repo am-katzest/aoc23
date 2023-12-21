@@ -96,6 +96,7 @@ type Visited = HashMap<(Coord, Mod2), usize>;
 type Queue =  VecDeque<(Coord, usize)>;
 
 fn add_children(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Visited, queue: &mut Queue) {
+    // TODO refactor create_child out
     for dir in DIRECTIONS {
         let t1 = t + 1;
         if t1 > max {
@@ -137,7 +138,6 @@ fn part1(m: Map, age: usize) -> usize {
             }
         }
     }
-
     //
     let mut result = m.clone();
     for ((coord, m), _) in visited {
@@ -145,30 +145,30 @@ fn part1(m: Map, age: usize) -> usize {
             result[coord] = Tile::Reachable;
         }
     }
+    let mut res = 0;
     for row in result.tiles {
         for i in row {
             match i {
                 Tile::Blocked => print!("#"),
                 Tile::Ground => print!("."),
-                Tile::Reachable => print!("O"),
+                Tile::Reachable => {res += 1;print!("O")},
             }
         }
         println!("", );
     }
-    
-    age
+    res
 }
 
 fn main() {
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 1));
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 2));
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 3));
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 4));
-    println!("part 1: {:?}", part1(parse("inputs/21a"), 5));
+    println!("part 1: {:?}", part1(parse("inputs/21a"), 6));
     //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn part1_test() {
+        assert_eq!(16, part1(parse("inputs/21a"), 6));
+    }
     use crate::*;
 }
