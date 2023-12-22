@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use itertools::Itertools;
 
@@ -98,7 +98,7 @@ fn fall(x: Vec<Brick>) -> Vec<Brick> {
         for i in 0..bricks.len() {
             let current = bricks[i];
             let down = move_vertically(current, -1);
-            if !(inside_grass(down) || collides_with_any(&bricks, down)){
+            if !(inside_grass(down) || collides_with_any(&bricks, down)) {
                 moved = true;
                 bricks[i] = down;
             }
@@ -131,17 +131,18 @@ fn collisions(bricks: &Vec<Brick>, down: Brick) -> Vec<usize> {
     bricks.iter().filter(|other| collides(down, **other)).map(|x| x.id).collect_vec()
 }
 
-type Dependencies = HashMap<usize, HashSet<usize>>;
-fn desintegration_impact(bricks: Vec<Brick>)  -> Dependencies {
+type Dependencies = HashMap<usize, (HashSet<usize>, HashSet<usize>)>;
+fn make_graph(bricks: Vec<Brick>) -> Dependencies {
     let mut deps: Dependencies = HashMap::new();
     for brick in &bricks {
-        let supports = collisions(&bricks, move_vertically(*brick, -1));
-        deps.insert(brick.id, supports.into_iter().collect());
+        let below = collisions(&bricks, move_vertically(*brick, -1)).into_iter().collect();
+        let above = collisions(&bricks, move_vertically(*brick, 1)).into_iter().collect();
+        deps.insert(brick.id, (above, below));
     }
     deps
 }
+
 fn part1(bricks: Vec<Brick>) -> usize {
-    let bricks = fall(bricks);
     let mut removable: HashMap<usize, bool> = bricks.iter().map(|x| (x.id, true)).collect();
     for brick in &bricks {
         let supports = collisions(&bricks, move_vertically(*brick, -1));
@@ -153,8 +154,47 @@ fn part1(bricks: Vec<Brick>) -> usize {
     removable.into_iter().filter(|(_, x)| *x).count()
 }
 
+// this is the wrong alghoritm, but i don't care :3
+fn desintegration_impact(b: usize, d: &Dependencies) -> usize {
+    let mut queue: VecDeque<usize> = VecDeque::new();
+    let mut d: Dependencies = d.clone();
+    let mut ctr = 0;
+    queue.push_back(b);
+    loop {
+        match queue.pop_front() {
+            None => return ctr - 1,
+            Some(current) => {
+                // we cut it out of the graph
+                let our = d.get(&current).unwrap();
+                ctr += 1;
+                // for each block we support
+                for above in our.0.clone() {
+                    // we remove our reference to that block
+                    // (because we don't exist, no reason for it honestly)
+                    d.get_mut(&current).unwrap().1.remove(&above);
+                    //, go to that node
+                    let their = d.get_mut(&above).unwrap();
+                    // remove ourselves
+                    their.1.remove(&current);
+                    // and if that means that block will fall too
+                    if their.1.len() == 0 {
+                        // we queue that block for deletion too
+                        queue.push_back(above);
+                    }
+                }
+            }
+        }
+    }
+}
+fn part2(bricks: Vec<Brick>) -> usize {
+    let deps = make_graph(bricks.clone());
+    bricks.iter().map(|x| desintegration_impact(x.id, &deps)).sum()
+}
+
 fn main() {
-    println!("part 1: {:?}", part1(parse("inputs/22b")));
+    let data = fall(parse("inputs/22a"));
+    println!("part 1: {:?}", part1(data.clone()));
+    println!("part 2: {:?}", part2(data.clone()));
 }
 
 #[cfg(test)]
