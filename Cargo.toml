@@ -2,7 +2,7 @@
 name = "aoc2023"
 version = "0.1.0"
 edition = "2021"
-default-run = "21"
+default-run = "22"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -95,3 +95,7 @@ path = "src/20.rs"
 [[bin]]
 name = "21"
 path = "src/21.rs"
+
+[[bin]]
+name = "22"
+path = "src/22.rs"
