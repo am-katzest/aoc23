@@ -98,14 +98,10 @@ fn fall(x: Vec<Brick>) -> Vec<Brick> {
         for i in 0..bricks.len() {
             let current = bricks[i];
             let down = move_vertically(current, -1);
-            if inside_grass(down) {
-                continue;
+            if !(inside_grass(down) || collides_with_any(&bricks, down)){
+                moved = true;
+                bricks[i] = down;
             }
-            if collides_with_any(&bricks, down){
-                continue;
-            }
-            moved = true;
-            bricks[i] = down;
         }
         if !moved {
             return bricks;
@@ -140,13 +136,11 @@ fn part1(bricks: Vec<Brick>) -> usize {
     let mut removable: HashMap<usize, bool> = bricks.iter().map(|x| (x.id, true)).collect();
     for brick in &bricks {
         let supports = collisions(&bricks, move_vertically(*brick, -1));
-//        println!("{:?}, {:?}", supports, brick);
 
         if supports.len() == 1 {
             removable.insert(supports[0], false);
         }
     }
-//    println!("{:?}", removable);
     removable.into_iter().filter(|(_, x)| *x).count()
 }
 
