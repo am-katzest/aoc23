@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
@@ -131,6 +131,15 @@ fn collisions(bricks: &Vec<Brick>, down: Brick) -> Vec<usize> {
     bricks.iter().filter(|other| collides(down, **other)).map(|x| x.id).collect_vec()
 }
 
+type Dependencies = HashMap<usize, HashSet<usize>>;
+fn desintegration_impact(bricks: Vec<Brick>)  -> Dependencies {
+    let mut deps: Dependencies = HashMap::new();
+    for brick in &bricks {
+        let supports = collisions(&bricks, move_vertically(*brick, -1));
+        deps.insert(brick.id, supports.into_iter().collect());
+    }
+    deps
+}
 fn part1(bricks: Vec<Brick>) -> usize {
     let bricks = fall(bricks);
     let mut removable: HashMap<usize, bool> = bricks.iter().map(|x| (x.id, true)).collect();
