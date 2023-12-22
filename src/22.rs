@@ -98,14 +98,15 @@ fn fall(x: Vec<Brick>) -> Vec<Brick> {
         for i in 0..bricks.len() {
             let current = bricks[i];
             let down = move_vertically(current, -1);
-            if !(inside_grass(down) || collides_with_any(&bricks, down)) {
+            if inside_grass(down) {
                 continue;
             }
-            println!("moved {:?} to {:?}", current, down);
+            if collides_with_any(&bricks, down){
+                continue;
+            }
             moved = true;
             bricks[i] = down;
         }
-        println!("iterated",);
         if !moved {
             return bricks;
         }
@@ -139,21 +140,18 @@ fn part1(bricks: Vec<Brick>) -> usize {
     let mut removable: HashMap<usize, bool> = bricks.iter().map(|x| (x.id, true)).collect();
     for brick in &bricks {
         let supports = collisions(&bricks, move_vertically(*brick, -1));
-        println!("{:?}, {:?}", supports, brick);
+//        println!("{:?}, {:?}", supports, brick);
 
         if supports.len() == 1 {
             removable.insert(supports[0], false);
         }
     }
-    println!("{:?}", removable);
-    3
+//    println!("{:?}", removable);
+    removable.into_iter().filter(|(_, x)| *x).count()
 }
 
 fn main() {
-    println!("{:?}", part1(parse("inputs/22a")));
-    //println!("{:?}", part1(parse("inputs/22a")));
-    //println!("{:?}", fall(parse("inputs/22a")));
-    //println!("{:?}", parse("inputs/22b"));
+    println!("part 1: {:?}", part1(parse("inputs/22b")));
 }
 
 #[cfg(test)]
