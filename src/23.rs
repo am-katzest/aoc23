@@ -124,30 +124,30 @@ fn traversible(m: &Map, s: Scanner) -> bool {
     traversible_tile(m[s.coord], s.dir)
 }
 
-fn insert(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
+fn insert_one(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
     match hm.get_mut(&k) {
         Some(p) => {
             p.insert(v);
         }
         None => {
-            let n = HashSet::new();
+            let mut n = HashSet::new();
             n.insert(v);
             hm.insert(k, n);
         }
     }
 }
 
-fn insert_both(n: &mut Nodes, v: Node) {
-    insert(&mut n.starts, v.start, v);
-    insert(&mut n.ends, v.end, v);
+fn insert(n: &mut Nodes, v: Node) {
+    insert_one(&mut n.starts, v.start, v);
+    insert_one(&mut n.ends, v.end, v);
 }
 
-fn remove_both(n: &mut Nodes, v: Node) {
-    remove(&mut n.starts, v.start, v);
-    remove(&mut n.ends, v.end, v);
+fn remove(n: &mut Nodes, v: Node) {
+    remove_one(&mut n.starts, v.start, v);
+    remove_one(&mut n.ends, v.end, v);
 }
 
-fn remove(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
+fn remove_one(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
     let mut end = hm.get_mut(&k).unwrap();
     end.remove(&v);
     if end.len() == 0 {
@@ -163,7 +163,7 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
             let start = last.coord;
             let end = current.coord;
             let node = Node { start, end, length: 1 };
-            insert_both(&mut acc, node);
+            insert(acc, node);
         }
         match advance(current, m) {
             Some(next) => {
@@ -190,8 +190,8 @@ fn merge2(n: &mut Nodes, head: Node, tail: Node) {
         length: head.length + tail.length,
     };
     insert(n, merged);
-    remove_both(n, head);
-    remove_both(n, tail);
+    remove(n, head);
+    remove(n, tail);
 }
 
 fn merge(i: Nodes) -> Nodes {
