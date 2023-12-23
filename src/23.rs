@@ -22,21 +22,21 @@ type Addr = u32; // could be u16 ( ***i think*** )
 
 type Coord = (Addr, Addr);
 
-fn step(d: Dir, (x, y): Coord) -> Coord {
+fn step(d: Dir, (x, y): Coord, m: &Map) -> Option<Coord> {
+    let (mx, my) = m.size;
     match d {
-        Dir::Left => (x - 1, y),
-        Dir::Right => (x + 1, y),
-        Dir::Down => (x, y + 1),
-        Dir::Up => (x, y - 1),
+        Dir::Left if x > 0 => Some((x - 1, y)),
+        Dir::Right if x < (mx - 1) => Some((x + 1, y)),
+        Dir::Down if y < (my - 1) => Some((x, y + 1)),
+        Dir::Up if y > 0 => Some((x, y - 1)),
+        _ => None,
     }
 }
-//fn can_move(d:Dir, t: Tile) {
-//
-//}
 
-//fn try_step(d: Dir, c: Coord, m: &Map) -> Option<Coord> {
-//
-//}
+fn advance(s: Scanner, m: &Map) -> Option<Scanner> {
+    let coord = step(s.dir, s.coord, m)?;
+    Some(Scanner { coord, ..s })
+}
 
 //type Map = Vec<Vec<Tile>>;
 #[derive(Clone, Debug)]
@@ -111,10 +111,50 @@ fn all_around(map: &Map) -> impl Iterator<Item = Scanner> + '_ {
     left.chain(right).chain(up).chain(down)
 }
 
+fn traversible_tile(t: Tile, d: Dir) -> bool {
+    match t {
+        Tile::Path => true,
+        Tile::Slope(x) if x == d => true,
+        _ => false,
+    }
+}
+
+fn traversible(m: &Map, s: Scanner) -> bool {
+    traversible_tile(m[s.coord], s.dir)
+}
+
+fn find_pairs(m: &Map, initial: Scanner, acc: &mut Vec<Node>) {
+    let mut current = advance(initial, m).unwrap();
+    let mut last = initial;
+    loop {
+        if traversible(m, current) && traversible(m, last) {
+            let node = Node {
+                start: last.coord,
+                end: current.coord,
+                length: 1,
+            };
+            acc.push(node);
+        }
+        match advance(current, m) {
+            Some(next) => {
+                last = current;
+                current = next;
+            }
+            None => {
+                break;
+            }
+        }
+    }
+}
+
 fn get_nodes(m: Map) -> Vec<Node> {
-    vec![]
+    let mut acc:Vec<Node> = Vec::new();
+    for i in all_around(&m) {
+        find_pairs(&m, i, &mut acc);
+    }
+    acc
 }
 
 fn main() {
-    println!("part 1: {:?}", get_nodes(parse("inputs/23a")));
+    println!("part 1: {:?}", get_nodes(parse("inputs/23c")));
 }
