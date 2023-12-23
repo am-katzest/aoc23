@@ -18,9 +18,9 @@ enum Dir {
     Up,
 }
 
-type Addr = usize; // todo: replace it everywhere
+type Addr = u32; // could be u16 ( ***i think*** )
 
-type Coord = (usize, usize);
+type Coord = (Addr, Addr);
 
 fn step(d: Dir, (x, y): Coord) -> Coord {
     match d {
@@ -50,7 +50,7 @@ struct Map {
 impl Index<Coord> for Map {
     type Output = Tile;
     fn index(&self, (x, y): Coord) -> &Tile {
-        &self.tiles[y][x]
+        &self.tiles[y as usize][x as usize]
     }
 }
 
@@ -72,9 +72,9 @@ fn parse(f: &str) -> Map {
         .lines()
         .map(|l| l.chars().map(parse_tile).collect_vec())
         .collect_vec();
-    let size = (tiles[0].len(), tiles.len());
+    let size = (tiles[0].len() as Addr, tiles.len() as Addr);
     let start = (1, 0);
-    let end = (size.0 -2, size.0-1);
+    let end = ((size.0 -2) as Addr, (size.0-1) as Addr);
     Map { tiles, start, end, size }
 }
 
