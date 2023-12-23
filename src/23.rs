@@ -11,7 +11,6 @@ enum Tile {
     Slope(Dir),
 }
 
-
 fn clockwise(x: Dir) -> Dir {
     match x {
         Dir::Left => Dir::Up,
@@ -89,7 +88,7 @@ fn parse(f: &str) -> Map {
         .collect_vec();
     let size = (tiles[0].len() as Addr, tiles.len() as Addr);
     let start = (1, 0);
-    let end = ((size.0 - 2) as Addr, (size.0 - 1) as Addr);
+    let end = ((size.0 - 2) as Addr, (size.1 - 1) as Addr);
     Map { tiles, start, end, size }
 }
 
@@ -178,7 +177,13 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
         if traversible(m, current) && traversible(m, last) {
             let start = last.coord;
             let end = current.coord;
-            let node = Node { start, end, dir: initial.dir, enddir: initial.dir, length: 1 };
+            let node = Node {
+                start,
+                end,
+                dir: initial.dir,
+                enddir: initial.dir,
+                length: 1,
+            };
             insert(acc, node);
         }
         match advance(current, m) {
@@ -207,7 +212,7 @@ fn merge2(n: &mut Nodes, head: Node, tail: Node) {
         end: tail.end,
         length: head.length + tail.length,
     };
-    println!("merging {:?} and {:?} into {:?}", head, tail, merged);
+    //println!("merging {:?} and {:?} into {:?}", head, tail, merged);
     insert(n, merged);
     remove(n, head);
     remove(n, tail);
@@ -219,20 +224,23 @@ fn merge(i: Nodes) -> Nodes {
         let mut to_merge: Option<(Node, Node)> = None; //fighting with borrow checker
         'outer: for (_, ns) in nodes.starts.iter() {
             for this in ns {
-                 match nodes.starts.get(&this.end) {
+                match nodes.starts.get(&this.end) {
                     Some(x) => {
                         let others = x.iter().filter(|x| x.dir != opposite(this.enddir)).collect_vec();
-                        if others.len() ==  1  { //exactly one in one of the three acceptable directions
-                        to_merge = Some((*this, *others[0]));
-                        break 'outer
+                        if others.len() == 1 {
+                            //exactly one in one of the three acceptable directions
+                            to_merge = Some((*this, *others[0]));
+                            break 'outer;
                         }
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 };
             }
         }
         match to_merge {
-            None => {break;},
+            None => {
+                break;
+            }
             Some((this, other)) => {
                 merge2(&mut nodes, this, other);
             }
@@ -252,6 +260,38 @@ fn get_nodes(m: Map) -> Nodes {
     acc
 }
 
+fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
+    //TODO end condition
+    if current.end == target {
+        return len;
+    }
+    println!("meow {len} {:?} {:?}", target, current);
+    let mut ml = 0;
+
+    match n.starts.get(&current.end) {
+        None => 0,
+        Some(children) => {
+            for pc in children {
+                if forbidden.contains(&pc.end) {
+                    continue;
+                }
+                let mut forbidden = forbidden.clone();
+                forbidden.push(pc.end);
+                ml = ml.max(rec_part(n, target, forbidden, *pc, len + pc.length));
+            }
+            ml
+        }
+    }
+}
+
+fn part1(m: Map, n: Nodes) -> usize {
+    let first = *n.starts.get(&m.start).unwrap().iter().next().unwrap();
+    let target = m.end;
+    rec_part(&n, target, vec![first.start], first, first.length)
+}
+
 fn main() {
-    println!("part 1: {:?}", merge(get_nodes(parse("inputs/23c"))));
+    let m = parse("inputs/23d");
+    let n = merge(get_nodes(m.clone()));
+    println!("part 1: {:?}", part1(m, n));
 }
