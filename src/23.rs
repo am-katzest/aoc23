@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 use std::iter;
 use std::ops::Index;
@@ -79,7 +79,7 @@ fn parse(f: &str) -> Map {
     Map { tiles, start, end, size }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct Node {
     start: Coord,
     end: Coord,
@@ -124,13 +124,36 @@ fn traversible(m: &Map, s: Scanner) -> bool {
     traversible_tile(m[s.coord], s.dir)
 }
 
-fn insert(hm: &mut HashMap<Coord, Vec<Node>>, k: Coord, v: Node) {
+fn insert(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
     match hm.get_mut(&k) {
-        Some(p) => {p.push(v);},
-        None => {hm.insert(k, vec![v]);},
+        Some(p) => {
+            p.insert(v);
+        }
+        None => {
+            let n = HashSet::new();
+            n.insert(v);
+            hm.insert(k, n);
+        }
     }
 }
 
+fn insert_both(n: &mut Nodes, v: Node) {
+    insert(&mut n.starts, v.start, v);
+    insert(&mut n.ends, v.end, v);
+}
+
+fn remove_both(n: &mut Nodes, v: Node) {
+    remove(&mut n.starts, v.start, v);
+    remove(&mut n.ends, v.end, v);
+}
+
+fn remove(hm: &mut HashMap<Coord, HashSet<Node>>, k: Coord, v: Node) {
+    let mut end = hm.get_mut(&k).unwrap();
+    end.remove(&v);
+    if end.len() == 0 {
+        hm.remove(&k);
+    }
+}
 
 fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
     let mut current = advance(initial, m).unwrap();
@@ -139,9 +162,8 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
         if traversible(m, current) && traversible(m, last) {
             let start = last.coord;
             let end = current.coord;
-            let node = Node {start, end, length: 1,};
-            insert(&mut acc.starts, start, node);
-            insert(&mut acc.ends, end, node);
+            let node = Node { start, end, length: 1 };
+            insert_both(&mut acc, node);
         }
         match advance(current, m) {
             Some(next) => {
@@ -155,14 +177,33 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 struct Nodes {
-    starts: HashMap<Coord, Vec<Node>>,
-    ends: HashMap<Coord, Vec<Node>>,
+    starts: HashMap<Coord, HashSet<Node>>,
+    ends: HashMap<Coord, HashSet<Node>>,
+}
+
+fn merge2(n: &mut Nodes, head: Node, tail: Node) {
+    let merged = Node {
+        start: head.start,
+        end: tail.end,
+        length: head.length + tail.length,
+    };
+    insert(n, merged);
+    remove_both(n, head);
+    remove_both(n, tail);
+}
+
+fn merge(i: Nodes) -> Nodes {
+    let mut n = i.clone();
+    n
 }
 
 fn get_nodes(m: Map) -> Nodes {
-    let mut acc = Nodes {starts: HashMap::new(), ends: HashMap::new()};
+    let mut acc = Nodes {
+        starts: HashMap::new(),
+        ends: HashMap::new(),
+    };
     for i in all_around(&m) {
         find_pairs(&m, i, &mut acc);
     }
