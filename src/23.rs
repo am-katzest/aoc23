@@ -11,7 +11,21 @@ enum Tile {
     Slope(Dir),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+
+fn clockwise(x: Dir) -> Dir {
+    match x {
+        Dir::Left => Dir::Up,
+        Dir::Right => Dir::Down,
+        Dir::Down => Dir::Left,
+        Dir::Up => Dir::Right,
+    }
+}
+
+fn opposite(x: Dir) -> Dir {
+    clockwise(clockwise(x))
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Dir {
     Left,
     Right,
@@ -83,6 +97,8 @@ fn parse(f: &str) -> Map {
 struct Node {
     start: Coord,
     end: Coord,
+    enddir: Dir,
+    dir: Dir,
     length: usize,
 }
 
@@ -162,7 +178,7 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
         if traversible(m, current) && traversible(m, last) {
             let start = last.coord;
             let end = current.coord;
-            let node = Node { start, end, length: 1 };
+            let node = Node { start, end, dir: initial.dir, enddir: initial.dir, length: 1 };
             insert(acc, node);
         }
         match advance(current, m) {
@@ -186,17 +202,43 @@ struct Nodes {
 fn merge2(n: &mut Nodes, head: Node, tail: Node) {
     let merged = Node {
         start: head.start,
+        dir: head.dir,
+        enddir: tail.enddir,
         end: tail.end,
         length: head.length + tail.length,
     };
+    println!("merging {:?} and {:?} into {:?}", head, tail, merged);
     insert(n, merged);
     remove(n, head);
     remove(n, tail);
 }
 
 fn merge(i: Nodes) -> Nodes {
-    let mut n = i.clone();
-    n
+    let mut nodes = i.clone();
+    loop {
+        let mut to_merge: Option<(Node, Node)> = None; //fighting with borrow checker
+        'outer: for (_, ns) in nodes.starts.iter() {
+            for this in ns {
+                 match nodes.starts.get(&this.end) {
+                    Some(x) => {
+                        let others = x.iter().filter(|x| x.dir != this.enddir).collect_vec();
+                        if others.len() ==  1  { //exactly one in one of the three acceptable directions
+                        to_merge = Some((*this, *others[0]));
+                        break 'outer
+                        }
+                    },
+                    _ => {},
+                };
+            }
+        }
+        match to_merge {
+            None => {break;},
+            Some((this, other)) => {
+                merge2(&mut nodes, this, other);
+            }
+        }
+    }
+    nodes
 }
 
 fn get_nodes(m: Map) -> Nodes {
@@ -211,5 +253,5 @@ fn get_nodes(m: Map) -> Nodes {
 }
 
 fn main() {
-    println!("part 1: {:?}", get_nodes(parse("inputs/23c")));
+    println!("part 1: {:?}", merge(get_nodes(parse("inputs/23c"))));
 }
