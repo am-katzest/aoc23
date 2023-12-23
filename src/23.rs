@@ -221,7 +221,7 @@ fn merge(i: Nodes) -> Nodes {
             for this in ns {
                  match nodes.starts.get(&this.end) {
                     Some(x) => {
-                        let others = x.iter().filter(|x| x.dir != this.enddir).collect_vec();
+                        let others = x.iter().filter(|x| x.dir != opposite(this.enddir)).collect_vec();
                         if others.len() ==  1  { //exactly one in one of the three acceptable directions
                         to_merge = Some((*this, *others[0]));
                         break 'outer
