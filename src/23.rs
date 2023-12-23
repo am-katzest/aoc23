@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::iter;
 use std::ops::Index;
@@ -123,17 +124,24 @@ fn traversible(m: &Map, s: Scanner) -> bool {
     traversible_tile(m[s.coord], s.dir)
 }
 
-fn find_pairs(m: &Map, initial: Scanner, acc: &mut Vec<Node>) {
+fn insert(hm: &mut HashMap<Coord, Vec<Node>>, k: Coord, v: Node) {
+    match hm.get_mut(&k) {
+        Some(p) => {p.push(v);},
+        None => {hm.insert(k, vec![v]);},
+    }
+}
+
+
+fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
     let mut current = advance(initial, m).unwrap();
     let mut last = initial;
     loop {
         if traversible(m, current) && traversible(m, last) {
-            let node = Node {
-                start: last.coord,
-                end: current.coord,
-                length: 1,
-            };
-            acc.push(node);
+            let start = last.coord;
+            let end = current.coord;
+            let node = Node {start, end, length: 1,};
+            insert(&mut acc.starts, start, node);
+            insert(&mut acc.ends, end, node);
         }
         match advance(current, m) {
             Some(next) => {
@@ -147,8 +155,14 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Vec<Node>) {
     }
 }
 
-fn get_nodes(m: Map) -> Vec<Node> {
-    let mut acc:Vec<Node> = Vec::new();
+#[derive(Clone, Debug, PartialEq)]
+struct Nodes {
+    starts: HashMap<Coord, Vec<Node>>,
+    ends: HashMap<Coord, Vec<Node>>,
+}
+
+fn get_nodes(m: Map) -> Nodes {
+    let mut acc = Nodes {starts: HashMap::new(), ends: HashMap::new()};
     for i in all_around(&m) {
         find_pairs(&m, i, &mut acc);
     }
