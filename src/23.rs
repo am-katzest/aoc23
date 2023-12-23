@@ -74,7 +74,7 @@ fn parse(f: &str) -> Map {
         .collect_vec();
     let size = (tiles[0].len() as Addr, tiles.len() as Addr);
     let start = (1, 0);
-    let end = ((size.0 -2) as Addr, (size.0-1) as Addr);
+    let end = ((size.0 - 2) as Addr, (size.0 - 1) as Addr);
     Map { tiles, start, end, size }
 }
 
@@ -85,11 +85,36 @@ struct Node {
     length: usize,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Scanner {
+    dir: Dir,
+    coord: Coord,
+}
+
+fn all_around(map: &Map) -> impl Iterator<Item = Scanner> + '_ {
+    let down = (0..map.size.0).map(|x| Scanner {
+        dir: Dir::Down,
+        coord: (x, 0),
+    });
+    let up = (0..map.size.0).map(|x| Scanner {
+        dir: Dir::Up,
+        coord: (x, map.size.1 - 1),
+    });
+    let right = (0..map.size.1).map(|y| Scanner {
+        dir: Dir::Right,
+        coord: (0, y),
+    });
+    let left = (0..map.size.1).map(|y| Scanner {
+        dir: Dir::Left,
+        coord: (map.size.0 - 1, y),
+    });
+    left.chain(right).chain(up).chain(down)
+}
+
 fn get_nodes(m: Map) -> Vec<Node> {
     vec![]
 }
 
 fn main() {
-    println!("part 1: {:?}", get_nodes(parse("inputs/10b")));
-
+    println!("part 1: {:?}", get_nodes(parse("inputs/23a")));
 }
