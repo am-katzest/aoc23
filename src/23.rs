@@ -271,13 +271,13 @@ fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len:
     match n.starts.get(&current.end) {
         None => 0,
         Some(children) => {
-            for pc in children {
-                if forbidden.contains(&pc.end) {
-                    continue;
+            for child in children {
+                if !forbidden.contains(&child.end) {
+
+                let mut forbidden_child = forbidden.clone();
+                forbidden_child.push(child.end);
+                ml = ml.max(rec_part(n, target, forbidden_child, *child, len + child.length));
                 }
-                let mut forbidden = forbidden.clone();
-                forbidden.push(pc.end);
-                ml = ml.max(rec_part(n, target, forbidden, *pc, len + pc.length));
             }
             ml
         }
@@ -291,7 +291,7 @@ fn part1(m: Map, n: Nodes) -> usize {
 }
 
 fn main() {
-    let m = parse("inputs/23d");
+    let m = parse("inputs/23a");
     let n = merge(get_nodes(m.clone()));
     println!("part 1: {:?}", part1(m, n));
 }
