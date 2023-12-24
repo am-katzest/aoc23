@@ -229,8 +229,15 @@ fn merge(i: Nodes) -> Nodes {
                         let others = x.iter().filter(|x| x.dir != opposite(this.enddir)).collect_vec();
                         if others.len() == 1 {
                             //exactly one in one of the three acceptable directions
-                            to_merge = Some((*this, *others[0]));
-                            break 'outer;
+                            //now we check if any nodes *end* here
+                            let other = others[0];
+                            match nodes.ends.get(&this.end) {
+                                Some(others) => if 0 != others.iter().filter(|x| x.enddir != this.enddir && x.enddir != other.enddir).count() {},
+                                _ => {
+                                    to_merge = Some((*this, *other));
+                                    break 'outer;
+                                }
+                            }
                         }
                     }
                     _ => {}
@@ -290,39 +297,7 @@ fn part1(m: Map, n: Nodes) -> usize {
 }
 
 fn main() {
-    let m = parse("inputs/23a");
+    let m = parse("inputs/23b");
     let n = merge(get_nodes(m.clone()));
     println!("part 1: {:?}", part1(m.clone(), n.clone()));
-
-    let m1 = parse("inputs/23a");
-    let n1 = merge(get_nodes(m1.clone()));
-    println!("part 1: {:?}", part1(m1.clone(), n1.clone()));
-    println!(
-        "{:?}",
-        merge(get_nodes(m1.clone()))
-            .starts
-            .iter()
-            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
-            .sorted()
-            .collect_vec()
-    );
-    println!(
-        "{:?}",
-        merge(get_nodes(m1.clone()))
-            .starts
-            .iter()
-            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
-            .sorted()
-            .collect_vec()
-    );
-    println!(
-        "{:?}",
-        merge(get_nodes(m1.clone()))
-            .starts
-            .iter()
-            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
-            .sorted()
-            .collect_vec()
-    );
-    println!("{:?}", n1);
 }
