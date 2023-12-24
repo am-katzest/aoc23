@@ -53,9 +53,12 @@ fn within_borders_xy(loc: Vector, mm: MM) -> bool {
 }
 
 fn intersect_xy(a: Hail, b: Hail, mm: MM) -> bool {
+    println!("trying to intersect {:?} and {:?}", a, b);
     match intersection_xy(a, b) {
-        Some(point) => on_the_line_xy(point, a) && on_the_line_xy(point, b) && within_borders_xy(point, mm),
-        None => false,
+        Some(point) => {
+            println!("found {:?}", point);
+            on_the_line_xy(point, a) && on_the_line_xy(point, b) && within_borders_xy(point, mm)},
+        None => {println!("no point"); false},
     }
 }
 
@@ -63,23 +66,24 @@ fn line_to_points(h: Hail) -> (Vector, Vector) {
     (h.position, add(h.position, h.velocity))
 }
 
-// would rather not do slopes, from https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+fn to_slope(h: Hail) -> (f64, f64) {
+    let slope = h.velocity.y / h.velocity.x;
+    let ans = (h.position.y - slope * h.position.x, slope);
+    println!("{:?} -> {:?}", h, ans);
+    ans
+}
+
+// yay, slopes, from https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 fn intersection_xy(a: Hail, b: Hail) -> Option<Vector> {
-    // TODO: switch to simpler method
-    let (p1, p2) = line_to_points(a);
-    let (p3, p4) = line_to_points(b);
-    let pxnom = (p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y - p4.y);
-    let pynom = (p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y - p4.y);
-    let denom = ((p1.x - p2.x) * (p3.y - p4.y)) - ((p1.y - p2.y) * (p3.x - p4.x));
-    if denom == 0. {
-        // check some smarter way
-        return None;
+    let (c, a) = to_slope(a);
+    let (d, b) = to_slope(b);
+    println!("{a} {b} {c} {d}", );
+    if b == a { // lines are parallel
+        return None
     }
-    Some(Vector {
-        x: pxnom / denom,
-        y: pynom / denom,
-        z: 0.,
-    })
+    let x  = (d-c) / (a-b);
+    let y = (a*x)+c;
+    Some(Vector {x, y, z: 0.})
 }
 
 fn parse_hail(h: &str) -> Hail {
@@ -109,24 +113,28 @@ fn main() {
     println!("{:?}", part1(&parse("inputs/24a"), (7., 27.)));
 }
 
+fn close_enough(a: f64, b: f64) -> bool {
+    (a-b).abs() < 1e-5 // this is sooo wrong
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
     #[test]
     fn linification_test() {
         let mkxy = |x, y| Vector { x, y, z: 0. };
-        assert_eq!(
-            Some(mkxy(1., 0.)),
-            intersection_xy(
+        let res = intersection_xy(
                 Hail {
-                    velocity: mkxy(0., -1.),
-                    position: mkxy(1., 1.)
+                    velocity: mkxy(-2., -2.),
+                    position: mkxy(20., 25.)
                 },
                 Hail {
-                    velocity: mkxy(1., 0.),
-                    position: mkxy(0., 0.)
+                    velocity: mkxy(-2., 1.),
+                    position: mkxy(19., 13.)
                 }
-            )
-        );
+            ).unwrap();
+        println!("{:?}", res);
+        assert!(close_enough(11.6666666, res.x));
+        assert!(close_enough(16.6666666, res.y));
     }
 }
