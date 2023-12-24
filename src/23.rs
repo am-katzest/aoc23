@@ -24,7 +24,7 @@ fn opposite(x: Dir) -> Dir {
     clockwise(clockwise(x))
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum Dir {
     Left,
     Right,
@@ -92,7 +92,7 @@ fn parse(f: &str) -> Map {
     Map { tiles, start, end, size }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Node {
     start: Coord,
     end: Coord,
@@ -198,7 +198,7 @@ fn find_pairs(m: &Map, initial: Scanner, acc: &mut Nodes) {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Nodes {
     starts: HashMap<Coord, HashSet<Node>>,
     ends: HashMap<Coord, HashSet<Node>>,
@@ -265,7 +265,7 @@ fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len:
     if current.end == target {
         return len;
     }
-    println!("meow {len} {:?} {:?}", target, current);
+    //println!("meow {len} {:?} {:?}", target, current);
     let mut ml = 0;
 
     match n.starts.get(&current.end) {
@@ -293,5 +293,13 @@ fn part1(m: Map, n: Nodes) -> usize {
 fn main() {
     let m = parse("inputs/23a");
     let n = merge(get_nodes(m.clone()));
-    println!("part 1: {:?}", part1(m, n));
+    println!("part 1: {:?}", part1(m.clone(), n.clone()));
+
+    let m1 = parse("inputs/23a");
+    let n1 = merge(get_nodes(m1.clone()));
+    println!("part 1: {:?}", part1(m1.clone(), n1.clone()));
+    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
+    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
+    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
+    println!("{:?}", n1);
 }
