@@ -273,10 +273,9 @@ fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len:
         Some(children) => {
             for child in children {
                 if !forbidden.contains(&child.end) {
-
-                let mut forbidden_child = forbidden.clone();
-                forbidden_child.push(child.end);
-                ml = ml.max(rec_part(n, target, forbidden_child, *child, len + child.length));
+                    let mut forbidden_child = forbidden.clone();
+                    forbidden_child.push(child.end);
+                    ml = ml.max(rec_part(n, target, forbidden_child, *child, len + child.length));
                 }
             }
             ml
@@ -298,8 +297,32 @@ fn main() {
     let m1 = parse("inputs/23a");
     let n1 = merge(get_nodes(m1.clone()));
     println!("part 1: {:?}", part1(m1.clone(), n1.clone()));
-    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
-    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
-    println!("{:?}", merge(get_nodes(m1.clone())).starts.iter().map(|(k, v)| (k, v.iter().sorted().collect_vec())).sorted().collect_vec());
+    println!(
+        "{:?}",
+        merge(get_nodes(m1.clone()))
+            .starts
+            .iter()
+            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
+            .sorted()
+            .collect_vec()
+    );
+    println!(
+        "{:?}",
+        merge(get_nodes(m1.clone()))
+            .starts
+            .iter()
+            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
+            .sorted()
+            .collect_vec()
+    );
+    println!(
+        "{:?}",
+        merge(get_nodes(m1.clone()))
+            .starts
+            .iter()
+            .map(|(k, v)| (k, v.iter().sorted().collect_vec()))
+            .sorted()
+            .collect_vec()
+    );
     println!("{:?}", n1);
 }
