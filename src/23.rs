@@ -1,7 +1,6 @@
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
-use std::iter;
 use std::ops::Index;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -68,6 +67,14 @@ impl Index<Coord> for Map {
     }
 }
 
+fn parse_tile_noslip(t: char) -> Tile {
+    match t {
+        '#' => Tile::Forest,
+        _ => Tile::Path,
+    }
+}
+
+
 fn parse_tile(t: char) -> Tile {
     match t {
         '.' => Tile::Path,
@@ -80,11 +87,11 @@ fn parse_tile(t: char) -> Tile {
     }
 }
 
-fn parse(f: &str) -> Map {
+fn parse(f: &str, pt: fn(char) -> Tile) -> Map {
     let tiles = read_to_string(f)
         .unwrap()
         .lines()
-        .map(|l| l.chars().map(parse_tile).collect_vec())
+        .map(|l| l.chars().map(pt).collect_vec())
         .collect_vec();
     let size = (tiles[0].len() as Addr, tiles.len() as Addr);
     let start = (1, 0);
@@ -267,12 +274,19 @@ fn get_nodes(m: Map) -> Nodes {
     acc
 }
 
-fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
-    //TODO end condition
+type Memory = HashMap<(Node, Vec<Coord>), usize>;
+fn rec_part(n: &Nodes, m: &mut Memory, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
+    let k = (current, forbidden.clone());
+    match m.get(&k) {
+        Some(prev) if *prev >= len => {
+            println!("found better previous one", );
+        },
+        _ => {},
+    }
+    m.insert(k, len);
     if current.end == target {
         return len;
     }
-    //println!("meow {len} {:?} {:?}", target, current);
     let mut ml = 0;
 
     match n.starts.get(&current.end) {
@@ -282,7 +296,8 @@ fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len:
                 if !forbidden.contains(&child.end) {
                     let mut forbidden_child = forbidden.clone();
                     forbidden_child.push(child.end);
-                    ml = ml.max(rec_part(n, target, forbidden_child, *child, len + child.length));
+                    forbidden_child.sort(); // should be very fast
+                    ml = ml.max(rec_part(n, m, target, forbidden_child, *child, len + child.length));
                 }
             }
             ml
@@ -293,11 +308,12 @@ fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len:
 fn part1(m: Map, n: Nodes) -> usize {
     let first = *n.starts.get(&m.start).unwrap().iter().next().unwrap();
     let target = m.end;
-    rec_part(&n, target, vec![first.start], first, first.length)
+    let mut mem: Memory = HashMap::new();
+    rec_part(&n, &mut mem, target, vec![first.start], first, first.length)
 }
 
 fn main() {
-    let m = parse("inputs/23b");
+    let m = parse("inputs/23b", parse_tile_noslip);
     let n = merge(get_nodes(m.clone()));
     println!("part 1: {:?}", part1(m.clone(), n.clone()));
 }
