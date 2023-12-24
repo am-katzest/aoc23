@@ -27,25 +27,21 @@ fn add(a: Vector, b: Vector) -> Vector {
 }
 
 fn on_the_line_xy(location: Vector, hail: Hail) -> bool {
-    assert!(hail.velocity.x != 0.); // TODO
     let diff = location.x - hail.position.x;
-    if diff % hail.velocity.x != 0. {
-        return false;
-    }
     let time = diff / hail.velocity.x;
     if time < 0. {
         return false;
     }
-    let expected_y_pos = time * hail.velocity.y + hail.position.y;
-    if expected_y_pos != location.y {
-        return false;
-    }
+    //let expected_y_pos = time * hail.velocity.y + hail.position.y;
+    // if !close_enough(expected_y_pos, location.y) {
+    //        return false;
+    //    }
     return true;
 }
 type MM = (f64, f64);
 
 fn within(a: f64, (min, max): MM) -> bool {
-    min >= a && a <= max
+    min <= a && a <= max
 }
 
 fn within_borders_xy(loc: Vector, mm: MM) -> bool {
@@ -53,12 +49,15 @@ fn within_borders_xy(loc: Vector, mm: MM) -> bool {
 }
 
 fn intersect_xy(a: Hail, b: Hail, mm: MM) -> bool {
-    println!("trying to intersect {:?} and {:?}", a, b);
+    //println!("trying to intersect {:?} and {:?}", a, b);
     match intersection_xy(a, b) {
         Some(point) => {
-            println!("found {:?}", point);
+            //println!("found {:?}", point);
+            if on_the_line_xy(point, a) && on_the_line_xy(point, b) && within_borders_xy(point, mm) {
+                //println!("accepted!", );
+            }
             on_the_line_xy(point, a) && on_the_line_xy(point, b) && within_borders_xy(point, mm)},
-        None => {println!("no point"); false},
+        None => false,
     }
 }
 
@@ -69,7 +68,7 @@ fn line_to_points(h: Hail) -> (Vector, Vector) {
 fn to_slope(h: Hail) -> (f64, f64) {
     let slope = h.velocity.y / h.velocity.x;
     let ans = (h.position.y - slope * h.position.x, slope);
-    println!("{:?} -> {:?}", h, ans);
+    //println!("{:?} -> {:?}", h, ans);
     ans
 }
 
@@ -77,8 +76,8 @@ fn to_slope(h: Hail) -> (f64, f64) {
 fn intersection_xy(a: Hail, b: Hail) -> Option<Vector> {
     let (c, a) = to_slope(a);
     let (d, b) = to_slope(b);
-    println!("{a} {b} {c} {d}", );
-    if b == a { // lines are parallel
+    //println!("{a} {b} {c} {d}", );
+    if close_enough(a, b) { // lines are parallel
         return None
     }
     let x  = (d-c) / (a-b);
@@ -105,12 +104,13 @@ fn part1(hails: &Vec<Hail>, mm: MM) -> usize {
     hails
         .iter()
         .cartesian_product(hails.iter())
-        .filter(|(a, b)| a != b && intersect_xy(**a, **b, mm))
+        .filter(|(a, b)| a > b && intersect_xy(**a, **b, mm))
         .count()
 }
 
 fn main() {
     println!("{:?}", part1(&parse("inputs/24a"), (7., 27.)));
+    println!("{:?}", part1(&parse("inputs/24b"), (200000000000000., 400000000000000.)));
 }
 
 fn close_enough(a: f64, b: f64) -> bool {
