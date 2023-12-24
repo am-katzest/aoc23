@@ -26,9 +26,39 @@ fn add(a: Vector, b: Vector) -> Vector {
     }
 }
 
-fn in_the_future(location: Vector, hail: Hail) -> bool {
-    todo!();
+fn on_the_line_xy(location: Vector, hail: Hail) -> bool {
+    assert!(hail.velocity.x != 0); // TODO
+    let diff = location.x - hail.position.x;
+    if diff % hail.velocity.x != 0 {
+        return false
+    }
+    let time = diff / hail.velocity.x;
+    if time < 0 {
+        return false
+    }
+    let  expected_y_pos = time * hail.velocity.y + hail.position.y;
+    if expected_y_pos != location.y {
+        return false
+    }
+    return true
 }
+type MM = (i32, i32);
+
+fn within(a: i32, (min, max): MM) -> bool{
+    min >= a && a <= max
+}
+
+fn within_borders_xy(loc: Vector, mm: MM) -> bool {
+    within(loc.x, mm) && within(loc.y, mm)
+}
+
+fn intersect_xy(a: Hail, b:Hail, mm: MM)  -> bool {
+    match intersection_xy(a, b) {
+        Some(point) => on_the_line_xy(point, a) && on_the_line_xy(point, b) && within_borders_xy(point, mm),
+        None => false,
+    }
+}
+
 fn line_to_points(h: Hail) -> (Vector, Vector) {
     (h.position, add(h.position, h.velocity))
 }
@@ -64,6 +94,11 @@ struct Hail {
 fn parse(f: &str) -> Vec<Hail> {
     std::fs::read_to_string(f).unwrap().lines().map(parse_hail).collect()
 }
+
+fn part1(hails: Vec<Hail>, mm: MM) -> i32 {
+
+}
+
 
 fn main() {
     println!("{:?}", parse("inputs/24a"));
