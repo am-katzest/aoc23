@@ -274,17 +274,9 @@ fn get_nodes(m: Map) -> Nodes {
     acc
 }
 
-type Memory = HashMap<(Node, Vec<Coord>), usize>;
-fn rec_part(n: &Nodes, m: &mut Memory, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
-    let k = (current, forbidden.clone());
-    match m.get(&k) {
-        Some(prev) if *prev >= len => {
-            println!("found better previous one", );
-        },
-        _ => {},
-    }
-    m.insert(k, len);
+fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
     if current.end == target {
+        println!("found {len}", );
         return len;
     }
     let mut ml = 0;
@@ -292,12 +284,12 @@ fn rec_part(n: &Nodes, m: &mut Memory, target: Coord, forbidden: Vec<Coord>, cur
     match n.starts.get(&current.end) {
         None => 0,
         Some(children) => {
-            for child in children {
+            for child in children.iter().sorted_by_key(|x| x.length).rev() {
                 if !forbidden.contains(&child.end) {
                     let mut forbidden_child = forbidden.clone();
                     forbidden_child.push(child.end);
                     forbidden_child.sort(); // should be very fast
-                    ml = ml.max(rec_part(n, m, target, forbidden_child, *child, len + child.length));
+                    ml = ml.max(rec_part(n, target, forbidden_child, *child, len + child.length));
                 }
             }
             ml
@@ -308,12 +300,11 @@ fn rec_part(n: &Nodes, m: &mut Memory, target: Coord, forbidden: Vec<Coord>, cur
 fn part1(m: Map, n: Nodes) -> usize {
     let first = *n.starts.get(&m.start).unwrap().iter().next().unwrap();
     let target = m.end;
-    let mut mem: Memory = HashMap::new();
-    rec_part(&n, &mut mem, target, vec![first.start], first, first.length)
+    rec_part(&n, target, vec![first.start], first, first.length)
 }
 
 fn main() {
-    let m = parse("inputs/23b", parse_tile_noslip);
+    let m = parse("inputs/23b", parse_tile);
     let n = merge(get_nodes(m.clone()));
     println!("part 1: {:?}", part1(m.clone(), n.clone()));
 }
