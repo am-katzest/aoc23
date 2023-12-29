@@ -7,7 +7,6 @@ use std::ops::{Index, IndexMut};
 enum Tile {
     Ground,
     Blocked,
-    Reachable,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -18,16 +17,14 @@ enum Dir {
     Up,
 }
 
-type Coord = (usize, usize);
+type Coord = (i32, i32);
 
-fn step(d: Dir, (x, y): Coord, m: &Map) -> Option<Coord> {
-    let (mx, my) = m.size;
+fn step(d: Dir, (x, y): Coord) -> Coord {
     match d {
-        Dir::Left if x > 0 => Some((x - 1, y)),
-        Dir::Right if x < (mx - 1) => Some((x + 1, y)),
-        Dir::Down if y < (my - 1) => Some((x, y + 1)),
-        Dir::Up if y > 0 => Some((x, y - 1)),
-        _ => None,
+        Dir::Left => (x - 1, y),
+        Dir::Right => (x + 1, y),
+        Dir::Down => (x, y + 1),
+        Dir::Up => (x, y - 1),
     }
 }
 
@@ -39,16 +36,20 @@ struct Map {
     size: Coord,
 }
 
+fn modulo(a: i32, b: i32) -> usize {
+    (((a % b) + b) % b) as usize
+}
+
 impl Index<Coord> for Map {
     type Output = Tile;
     fn index(&self, (x, y): Coord) -> &Tile {
-        &self.tiles[y][x]
+        &self.tiles[modulo(y, self.size.1)][modulo(x, self.size.0)]
     }
 }
 
 impl IndexMut<Coord> for Map {
     fn index_mut(&mut self, (x, y): Coord) -> &mut Tile {
-        &mut self.tiles[y][x]
+        &mut self.tiles[modulo(y, self.size.1)][modulo(x, self.size.0)]
     }
 }
 
@@ -71,14 +72,14 @@ fn parse(f: &str) -> Map {
                 .enumerate()
                 .map(|(x, c)| {
                     if c == 'S' {
-                        start = (x, y)
+                        start = (x as i32, y as i32)
                     };
                     parse_tile(c)
                 })
                 .collect_vec()
         })
         .collect_vec();
-    let size = (tiles[0].len(), tiles.len());
+    let size = (tiles[0].len() as i32, tiles.len() as i32);
     Map { tiles, start, size }
 }
 
@@ -105,10 +106,8 @@ fn add_child(m: &Map, max: usize, (coord, t): Walker, visited: &mut Visited, que
     if t1 > max {
         return;
     }
-    let coord1 = match step(dir, coord, m) {
-        None => return,
-        Some(x) => x,
-    };
+    let coord1 = step(dir, coord);
+
     if m[coord1] == Tile::Blocked {
         return;
     }
@@ -133,8 +132,7 @@ fn add_children(m: &Map, max: usize, coord: Coord, t: usize, visited: &mut Visit
     }
 }
 
-fn part1(m: Map, age: usize) -> usize {
-    println!("{:?}", m.start);
+fn part1(m: &Map, age: usize) -> usize {
     let mut visited: Visited = HashMap::new();
     let mut queue: Queue = VecDeque::new();
     queue.push_back((m.start, 0));
@@ -148,32 +146,34 @@ fn part1(m: Map, age: usize) -> usize {
         }
     }
     //
-    let mut result = m.clone();
+    let mut res = 0;
     for ((coord, m), _) in visited {
         if m == mod2(age) {
-            result[coord] = Tile::Reachable;
+            res += 1
         }
-    }
-    let mut res = 0;
-    for row in result.tiles {
-        for i in row {
-            match i {
-                Tile::Blocked => print!("#"),
-                Tile::Ground => print!("."),
-                Tile::Reachable => {
-                    res += 1;
-                    print!("O")
-                }
-            }
-        }
-        println!("",);
     }
     res
 }
 
+fn diff(m:&Map, age: usize ) -> usize {
+    let exc = (age+1) * (age+1);
+    exc - part1(m, age)
+}
+fn part2(m: &Map, age: usize) -> usize {
+    let diameter = 131;
+    let radius = 65;
+    //for a in 60..70 {
+    for a in 60..70 {
+        println!("{a} -> {}", diff(&m, a));
+    }
+    3
+}
+
+
 fn main() {
     //println!("part 1: {:?}", part1(parse("inputs/21a"), 6));
-    println!("part 1: {:?}", part1(parse("inputs/21b"), 64));
+    //println!("part 1: {:?}", part1(parse("inputs/21b"), 64));
+    println!("part 2: {:?}", part2(&parse("inputs/21b"), 64*3+3));
     //println!("part 2: {:?}", part2(parse("inputs/10b"), Dir::Up));
 }
 
