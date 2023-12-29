@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::{vec_deque, HashMap, HashSet, VecDeque};
 use std::fs::read_to_string;
 use std::ops::Index;
 
@@ -74,7 +74,6 @@ fn parse_tile_noslip(t: char) -> Tile {
     }
 }
 
-
 fn parse_tile(t: char) -> Tile {
     match t {
         '.' => Tile::Path,
@@ -88,11 +87,7 @@ fn parse_tile(t: char) -> Tile {
 }
 
 fn parse(f: &str, pt: fn(char) -> Tile) -> Map {
-    let tiles = read_to_string(f)
-        .unwrap()
-        .lines()
-        .map(|l| l.chars().map(pt).collect_vec())
-        .collect_vec();
+    let tiles = read_to_string(f).unwrap().lines().map(|l| l.chars().map(pt).collect_vec()).collect_vec();
     let size = (tiles[0].len() as Addr, tiles.len() as Addr);
     let start = (1, 0);
     let end = ((size.0 - 2) as Addr, (size.1 - 1) as Addr);
@@ -239,7 +234,12 @@ fn merge(i: Nodes) -> Nodes {
                             //now we check if any nodes *end* here
                             let other = others[0];
                             match nodes.ends.get(&this.end) {
-                                Some(others) => if 0 != others.iter().filter(|x| x.enddir != this.enddir && x.enddir != other.enddir).count() {},
+                                Some(others)
+                                    if 0 != others
+                                        .iter()
+                                        .map(|x| x.enddir)
+                                        .filter(|&x| !(x == this.enddir || x == opposite(other.dir)))
+                                        .count() => {}
                                 _ => {
                                     to_merge = Some((*this, *other));
                                     break 'outer;
@@ -274,18 +274,48 @@ fn get_nodes(m: Map) -> Nodes {
     acc
 }
 
+fn reachable(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node) -> bool {
+    return true;
+    //println!("meow {:?} {:?}", n.clone().starts.iter().count(), forbidden.len());
+    let mut visited: Vec<Coord> = vec![];
+    let mut to_visit: VecDeque<Coord> = VecDeque::from([current.end.clone()]);
+    loop {
+        //println!("{:?}", to_visit);
+        match to_visit.pop_back() {
+            Some(current) => {
+                if current == target {
+                    return true; // there is a path to target
+                }
+                match n.starts.get(&current) {
+                    Some(children) => {
+                        for x in children {
+                            let x = x.end;
+                            if !(forbidden.contains(&x) || visited.contains(&x)) {
+                                visited.push(x);
+                                to_visit.push_front(x);
+                            }
+                        }
+                    }
+                    None => {}
+                }
+            }
+            None => break,
+        }
+    }
+    false
+}
+
 fn rec_part(n: &Nodes, target: Coord, forbidden: Vec<Coord>, current: Node, len: usize) -> usize {
     if current.end == target {
-        println!("found {len}", );
+        //println!("found {len}",);
         return len;
     }
     let mut ml = 0;
-
     match n.starts.get(&current.end) {
         None => 0,
         Some(children) => {
             for child in children.iter().sorted_by_key(|x| x.length).rev() {
-                if !forbidden.contains(&child.end) {
+                if !forbidden.contains(&child.end) && reachable(n, target, forbidden.clone(), current) {
                     let mut forbidden_child = forbidden.clone();
                     forbidden_child.push(child.end);
                     forbidden_child.sort(); // should be very fast
@@ -302,9 +332,11 @@ fn part1(m: Map, n: Nodes) -> usize {
     let target = m.end;
     rec_part(&n, target, vec![first.start], first, first.length)
 }
-
+// 6734 too high
 fn main() {
-    let m = parse("inputs/23b", parse_tile);
-    let n = merge(get_nodes(m.clone()));
+    let m = parse("inputs/23b", parse_tile_noslip);
+    let nodes = get_nodes(m.clone());
+    let n = merge(nodes.clone());
+    //println!("a: {:?}, b: {:?}", nodes.starts.len(), n.starts.len());
     println!("part 1: {:?}", part1(m.clone(), n.clone()));
 }
